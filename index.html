@@ -1365,6 +1365,26 @@ async function fetchTrend(sym, source) {
   }
 }
 
+// ─────────────────────────────────────────────
+// SUPPLEMENTARY FDV FETCH (CoinGecko, no key)
+// ─────────────────────────────────────────────
+async function fetchFDV(sym) {
+  try {
+    const searchRes = await fetch(`${GECKO_API}/search?query=${sym}`).catch(() => null);
+    if (!searchRes || !searchRes.ok) return null;
+    const searchData = await searchRes.json();
+    const coin = searchData.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase());
+    if (!coin) return null;
+    const mktRes = await fetch(
+      `${GECKO_API}/coins/markets?vs_currency=usd&ids=${coin.id}&per_page=1&page=1`
+    ).catch(() => null);
+    if (!mktRes || !mktRes.ok) return null;
+    const list = await mktRes.json();
+    const fdv = list?.[0]?.fully_diluted_valuation ?? null;
+    return typeof fdv === 'number' && fdv > 0 ? fdv : null;
+  } catch(e) { return null; }
+}
+
 async function fetchBinance(sym) {
   const pair = sym.toUpperCase() + 'USDT';
   const [tickerRes, oiRes, frRes] = await Promise.all([
@@ -1460,28 +1480,28 @@ async function fetchOIDelta(sym, source) {
   try {
     if (source === 'Binance Futures') {
       const res = await fetch(
-        `${BINANCE_FAPI}/openInterestHist?symbol=${sym}USDT&period=5m&limit=2`
+        `${BINANCE_FAPI}/openInterestHist?symbol=${sym}USDT&period=1h&limit=25`
       ).catch(() => null);
       if (res && res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length >= 2) {
           const older   = parseFloat(data[0].sumOpenInterest);
-          const newer   = parseFloat(data[1].sumOpenInterest);
+          const newer   = parseFloat(data[data.length - 1].sumOpenInterest);
           const oiTrend = ((newer - older) / older) * 100;
-          return { oiTrend, currentOI: null }; // currentOI already fetched in fetchBinance
+          return { oiTrend, currentOI: null };
         }
       }
     } else if (source === 'Bybit Linear') {
       const res = await fetch(
-        `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=5min&limit=2`
+        `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`
       ).catch(() => null);
       if (res && res.ok) {
         const data = await res.json();
         const list = data.result?.list || [];
         if (list.length >= 2) {
-          // Bybit returns newest first
+          // Bybit returns newest first — list[0] = newest, list[last] = oldest
           const newer   = parseFloat(list[0].openInterest);
-          const older   = parseFloat(list[1].openInterest);
+          const older   = parseFloat(list[list.length - 1].openInterest);
           const oiTrend = ((newer - older) / older) * 100;
           return { oiTrend, currentOI: null };
         }
@@ -1667,11 +1687,11 @@ function buildDashboard(data, bias, trendObj, oiTrend) {
 
   let oiStatus = '—', oiClass = 'neutral', oiReading = 'Historical delta unavailable';
   if (oiTrend !== null) {
-    if (oiTrend > 1 && change24h > 0)       { oiStatus = 'LONG BUILDUP';  oiClass = 'bull'; oiReading = `OI +${oiTrend.toFixed(1)}% · Price +${change24h.toFixed(2)}%`; }
-    else if (oiTrend > 1 && change24h < 0)  { oiStatus = 'SHORT BUILDUP'; oiClass = 'bear'; oiReading = `OI +${oiTrend.toFixed(1)}% · Price ${change24h.toFixed(2)}%`; }
-    else if (oiTrend < -1 && change24h > 0) { oiStatus = 'SHORT COVER';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% · Weak rally`; }
-    else if (oiTrend < -1 && change24h < 0) { oiStatus = 'LONG UNWIND';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% · Sellers exiting`; }
-    else { oiStatus = 'STABLE'; oiClass = 'neutral'; oiReading = `OI Δ${oiTrend.toFixed(1)}%`; }
+    if (oiTrend > 1 && change24h > 0)       { oiStatus = 'LONG BUILDUP';  oiClass = 'bull'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h) · Price +${change24h.toFixed(2)}%`; }
+    else if (oiTrend > 1 && change24h < 0)  { oiStatus = 'SHORT BUILDUP'; oiClass = 'bear'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h) · Price ${change24h.toFixed(2)}%`; }
+    else if (oiTrend < -1 && change24h > 0) { oiStatus = 'SHORT COVER';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h) · Weak rally`; }
+    else if (oiTrend < -1 && change24h < 0) { oiStatus = 'LONG UNWIND';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h) · Sellers exiting`; }
+    else { oiStatus = 'STABLE'; oiClass = 'neutral'; oiReading = `OI Δ${oiTrend.toFixed(1)}% (24h)`; }
   } else if (!isFutures) { oiReading = 'Spot data — not available'; }
 
   let frStatus = '—', frClass = 'neutral', frReading = '—';
@@ -1860,6 +1880,13 @@ async function fetchData() {
     setStatus(`"${sym}" not found on Binance Futures, Bybit, or CoinGecko. Check the ticker and try again.`);
     document.getElementById('sourceText').textContent = `Binance Futures → Bybit → CoinGecko fallback chain`;
     return;
+  }
+
+  // Patch FDV for futures sources (Binance/Bybit don't carry FDV natively)
+  if (data.fdv === null && data.source !== 'CoinGecko (Spot)') {
+    setSpinner(true, `Fetching FDV from CoinGecko...`);
+    data.fdv = await fetchFDV(sym);
+    setSpinner(false);
   }
 
   await renderResult(data);
