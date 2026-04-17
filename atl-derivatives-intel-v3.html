@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATL · Derivatives Intel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080b0f;
+  --bg2: #0d1117;
+  --bg3: #111820;
+  --border: rgba(255,255,255,0.07);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.12);
+  --red: #ff4444;
+  --red-dim: rgba(255,68,68,0.12);
+  --gold: #ffd54f;
+  --gold-dim: rgba(255,213,79,0.12);
+  --blue: #40c4ff;
+  --blue-dim: rgba(64,196,255,0.10);
+  --orange: #ff9800;
+  --orange-dim: rgba(255,152,0,0.12);
+  --text: #e8edf2;
+  --muted: #5a6470;
+  --sub: #8892a0;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 400;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.015) 3px, rgba(255,255,255,0.015) 4px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(8,11,15,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.nav-logo span { color: var(--green); }
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-badge {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.3);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+.nav-refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+.refresh-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.refresh-dot.live { background: var(--green); animation: pulse 2s infinite; }
+
+/* MAIN */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 100px 32px 80px;
+}
+
+/* HERO */
+.hero-tag {
+  display: inline-block;
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.25);
+  background: var(--green-dim);
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 5vw, 58px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+.hero-title .accent { color: var(--green); }
+.hero-title .dim { color: var(--muted); font-weight: 400; }
+.hero-sub {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--sub);
+  max-width: 560px;
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+/* ── MARKET OVERVIEW PANEL ── */
+.market-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+.mo-cell {
+  background: var(--bg2);
+  padding: 20px 24px;
+  transition: background 0.15s;
+}
+.mo-cell:hover { background: var(--bg3); }
+.mo-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.mo-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.mo-value.green { color: var(--green); }
+.mo-value.blue { color: var(--blue); }
+.mo-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+/* ── TOP VOLUME PANEL ── */
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, rgba(255,255,255,0.03) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 3px;
+  height: 12px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── TOP VOLUME TABLE ── */
+.tvol-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+.tvol-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.tvol-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tvol-note {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.tvol-col-heads {
+  display: grid;
+  grid-template-columns: 28px 1fr 90px 110px 90px 70px;
+  padding: 8px 20px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.015);
+  gap: 10px;
+  align-items: center;
+}
+.tvol-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 90px 110px 90px 70px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 10px;
+  transition: background 0.1s;
+}
+.tvol-row:last-child { border-bottom: none; }
+.tvol-row:hover { background: var(--bg3); }
+.tvol-rank {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 300;
+  text-align: center;
+}
+.tvol-sym-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tvol-sym {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tvol-exch {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tvol-exch.binance { color: #f0b90b; }
+.tvol-exch.bybit   { color: #f7a600; }
+.tvol-price {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-volume {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue);
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-oi {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--sub);
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-change {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-change.up   { color: var(--green); }
+.tvol-change.down { color: var(--red); }
+.tvol-list-body { min-height: 120px; }
+
+/* SEARCH BAR */
+.search-wrap {
+  display: flex;
+  gap: 0;
+  max-width: 560px;
+  border: 1px solid rgba(0,230,118,0.25);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg2);
+  transition: border-color 0.2s;
+}
+.search-wrap:focus-within {
+  border-color: rgba(0,230,118,0.6);
+  box-shadow: 0 0 0 3px rgba(0,230,118,0.06);
+}
+.ticker-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--bg3);
+  border-right: 1px solid var(--border);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#tickerInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 14px 16px;
+  caret-color: var(--green);
+}
+#tickerInput::placeholder { color: var(--muted); font-weight: 400; font-size: 15px; text-transform: none; letter-spacing: 0; }
+.btn-fetch {
+  background: var(--green);
+  color: #000;
+  border: none;
+  padding: 0 28px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn-fetch:hover { opacity: 0.88; }
+.btn-fetch:active { transform: scale(0.98); }
+.btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 300;
+}
+.source-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.source-dot.active { background: var(--green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+.status-msg {
+  font-size: 13px;
+  color: var(--red);
+  padding: 14px 18px;
+  border: 1px solid rgba(255,68,68,0.2);
+  background: var(--red-dim);
+  border-radius: 4px;
+  margin-top: 24px;
+  display: none;
+}
+
+#resultSection { display: none; }
+
+.section-tag {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+.coin-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.coin-symbol {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -0.02em;
+}
+.coin-price {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--green);
+}
+.coin-change { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; }
+.coin-change.up { color: var(--green); }
+.coin-change.down { color: var(--red); }
+.source-badge {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  color: var(--sub);
+  margin-left: auto;
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.data-cell {
+  background: var(--bg2);
+  padding: 18px 20px;
+  transition: background 0.15s;
+}
+.data-cell:hover { background: var(--bg3); }
+.data-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.data-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.data-value.green { color: var(--green); }
+.data-value.red { color: var(--red); }
+.data-value.gold { color: var(--gold); }
+.data-value.blue { color: var(--blue); }
+.data-sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 300; }
+
+/* ── BIAS CARD ── */
+.bias-card {
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.bias-header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.bias-header-left { display: flex; flex-direction: column; gap: 6px; }
+.bias-header-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bias-verdict {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.bias-verdict.long { color: var(--green); }
+.bias-verdict.short { color: var(--red); }
+.bias-verdict.avoid { color: var(--gold); }
+.bias-verdict.neutral { color: var(--sub); }
+.bias-sub-text {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--sub);
+  line-height: 1.5;
+  max-width: 480px;
+}
+.bias-score-pills {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.score-pill {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+.score-pill.bull { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+.score-pill.bear { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+
+.bias-signals {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg2);
+}
+.signal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--sub);
+  line-height: 1.6;
+}
+.signal-icon {
+  width: 18px; height: 18px;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.signal-icon.bull { background: var(--green-dim); color: var(--green); }
+.signal-icon.bear { background: var(--red-dim); color: var(--red); }
+.signal-icon.warn { background: var(--gold-dim); color: var(--gold); }
+.signal-icon.info { background: var(--blue-dim); color: var(--blue); }
+.signal-icon.neutral { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+/* DASHBOARD TABLE */
+.dashboard {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.dash-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  background: #0a1628;
+  padding: 10px 16px;
+  color: #7a9cc4;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.dash-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  transition: background 0.1s;
+}
+.dash-row:hover { background: var(--bg3); }
+.dash-row:last-child { border-bottom: none; }
+.dash-factor { color: var(--text); font-weight: 400; }
+.dash-status { font-weight: 500; }
+.dash-status.bull { color: var(--green); }
+.dash-status.bear { color: var(--red); }
+.dash-status.warn { color: var(--gold); }
+.dash-status.neutral { color: var(--muted); }
+.dash-reading { color: var(--sub); font-weight: 300; }
+
+/* SPINNER */
+.spinner-wrap {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 300;
+}
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.4s ease, transform 0.4s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* FOOTER */
+footer {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; }
+.footer-logo span { color: var(--green); }
+.footer-disc {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 300;
+  max-width: 420px;
+  text-align: right;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .tvol-col-heads, .tvol-row { grid-template-columns: 28px 1fr 90px 90px 70px; }
+  .tvol-col-heads .tvol-oi-col, .tvol-row .tvol-oi { display: none; }
+}
+@media (max-width: 640px) {
+  main { padding: 90px 20px 60px; }
+  nav { padding: 0 20px; }
+  .search-wrap { flex-direction: column; border-radius: 4px; }
+  .btn-fetch { padding: 14px; text-align: center; }
+  .dash-header, .dash-row { font-size: 10px; }
+  .footer-disc { text-align: left; }
+  .market-overview { grid-template-columns: 1fr; }
+  .tvol-col-heads, .tvol-row { grid-template-columns: 28px 1fr 90px 70px; }
+  .tvol-col-heads .tvol-price-col,
+  .tvol-row .tvol-price { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>ATL</span> · AlphaTradersLabs</div>
+  <div class="nav-right">
+    <div class="nav-refresh">
+      <div class="refresh-dot" id="refreshDot"></div>
+      <span id="refreshText">Loading market data...</span>
+    </div>
+    <div class="nav-badge">Derivatives Intel</div>
+  </div>
+</nav>
+
+<main>
+  <div class="hero-tag">Market Intelligence Tool</div>
+  <h1 class="hero-title">
+    <span class="accent">Derivatives</span><br>
+    <span class="dim">Intel</span> Engine
+  </h1>
+  <p class="hero-sub">Enter any ticker to fetch live Open Interest, Funding Rate, Volume, FDV and more — then get an automated market bias based on institutional derivatives logic.</p>
+
+  <!-- ── TICKER SEARCH (hero position) ── -->
+  <div class="search-wrap" style="margin-bottom:12px;">
+    <div class="ticker-prefix">Ticker</div>
+    <input type="text" id="tickerInput" placeholder="BTC, ETH, SOL..." maxlength="20" autocomplete="off" spellcheck="false">
+    <button class="btn-fetch" id="fetchBtn" onclick="fetchData()">Fetch →</button>
+  </div>
+
+  <div class="source-row" style="margin-bottom:0;">
+    <div class="source-dot" id="sourceDot"></div>
+    <span id="sourceText">Binance Futures → Bybit → CoinGecko fallback chain</span>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+  <div class="spinner-wrap" id="spinner">
+    <div class="spinner"></div>
+    <span id="spinnerText">Querying Binance Futures...</span>
+  </div>
+
+  <!-- ── RESULT SECTION (inline, pushes content down) ── -->
+  <div id="resultSection">
+    <hr>
+    <div class="section-tag">Live Data</div>
+    <div class="coin-header">
+      <span class="coin-symbol" id="coinSymbol">—</span>
+      <span class="coin-price" id="coinPrice">—</span>
+      <span class="coin-change" id="coinChange">—</span>
+      <span class="source-badge" id="sourceBadge">—</span>
+    </div>
+    <div class="data-grid" id="dataGrid"></div>
+    <hr>
+    <div class="section-tag">Signal Dashboard</div>
+    <div class="dashboard" id="dashboard" style="margin-bottom:24px;"></div>
+    <hr>
+    <div class="section-tag">ATL Bias Engine</div>
+    <div class="bias-card" id="biasCard">
+      <div class="bias-header">
+        <div class="bias-header-left">
+          <span class="bias-header-label">Market Bias</span>
+          <span class="bias-verdict" id="biasVerdict">—</span>
+          <span class="bias-sub-text" id="biasSubText"></span>
+        </div>
+        <div class="bias-score-pills" id="biasScorePills"></div>
+      </div>
+      <div class="bias-signals" id="biasSignals"></div>
+    </div>
+  </div>
+
+  <div style="height:48px;"></div>
+
+  <!-- ── MARKET OVERVIEW ── -->
+  <div class="market-overview" id="marketOverview">
+    <div class="mo-cell">
+      <div class="mo-label">Crypto Market Cap</div>
+      <div class="mo-value" id="moMarketCap"><div class="skeleton" style="width:120px;height:22px;"></div></div>
+      <div class="mo-sub" id="moMarketCapChange">&nbsp;</div>
+    </div>
+    <div class="mo-cell">
+      <div class="mo-label">24h Trading Volume</div>
+      <div class="mo-value blue" id="moVolume"><div class="skeleton" style="width:100px;height:22px;"></div></div>
+      <div class="mo-sub" id="moVolumeNote">&nbsp;</div>
+    </div>
+    <div class="mo-cell">
+      <div class="mo-label">Total Markets</div>
+      <div class="mo-value" id="moMarkets"><div class="skeleton" style="width:60px;height:22px;"></div></div>
+      <div class="mo-sub">Active trading pairs</div>
+    </div>
+    <div class="mo-cell">
+      <div class="mo-label">Open Interest</div>
+      <div class="mo-value green" id="moOI"><div class="skeleton" style="width:90px;height:22px;"></div></div>
+      <div class="mo-sub">Crypto futures OI</div>
+    </div>
+  </div>
+
+  <!-- ── TOP VOLUME PAIRS ── -->
+  <div class="tvol-card reveal">
+    <div class="tvol-header">
+      <span class="tvol-title">Top Volume Pairs — Binance &amp; Bybit Futures</span>
+      <span class="tvol-note" id="tvolNote">Loading...</span>
+    </div>
+    <div class="tvol-col-heads">
+      <span>#</span>
+      <span>Pair</span>
+      <span class="tvol-price-col" style="text-align:right;">Price</span>
+      <span style="text-align:right;">24h Volume</span>
+      <span class="tvol-oi-col" style="text-align:right;">Open Interest</span>
+      <span style="text-align:right;">24h Chg</span>
+    </div>
+    <div class="tvol-list-body" id="tvolList">
+      <div class="tvol-row" style="opacity:0.35;">
+        <div class="skeleton" style="width:16px;height:10px;"></div>
+        <div class="skeleton" style="width:80px;height:10px;"></div>
+        <div class="skeleton" style="width:60px;height:10px;"></div>
+        <div class="skeleton" style="width:70px;height:10px;"></div>
+        <div class="skeleton" style="width:60px;height:10px;"></div>
+        <div class="skeleton" style="width:44px;height:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-logo"><span>ATL</span> · AlphaTradersLabs</div>
+  <div class="footer-disc">For confluence use only. Not financial advice. Always combine with price action and market structure analysis.</div>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+const BINANCE_FAPI = 'https://fapi.binance.com/fapi/v1';
+const BYBIT_API    = 'https://api.bybit.com/v5/market';
+const GECKO_API    = 'https://api.coingecko.com/api/v3';
+
+let lastData = null;
+let marketRefreshTimer = null;
+let refreshCountdown = 60;
+
+// ─────────────────────────────────────────────
+// FORMAT HELPERS
+// ─────────────────────────────────────────────
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (Math.abs(n) >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+  if (Math.abs(n) >= 1e3)  return '$' + (n/1e3).toFixed(2) + 'K';
+  return '$' + n.toFixed(2);
+}
+function fmtPrice(n) {
+  if (!n || isNaN(n)) return '—';
+  if (n >= 1000) return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (n >= 1)    return '$' + n.toFixed(4);
+  if (n >= 0.01) return '$' + n.toFixed(5);
+  return '$' + n.toFixed(8);
+}
+
+// ─────────────────────────────────────────────
+// TOP VOLUME PAIRS (Binance + Bybit, deduplicated)
+// ─────────────────────────────────────────────
+async function loadTopVolume() {
+  const listEl  = document.getElementById('tvolList');
+  const noteEl  = document.getElementById('tvolNote');
+
+  try {
+    const [binRes, bybitRes] = await Promise.all([
+      fetch(`${BINANCE_FAPI}/ticker/24hr`).catch(() => null),
+      fetch(`${BYBIT_API}/tickers?category=linear`).catch(() => null),
+    ]);
+
+    const seen    = new Set();
+    const merged  = [];
+
+    // ── Binance ──
+    if (binRes && binRes.ok) {
+      const binList = await binRes.json();
+      if (Array.isArray(binList)) {
+        binList
+          .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) > 0)
+          .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+          .slice(0, 40)
+          .forEach(t => {
+            const base = t.symbol.replace('USDT', '');
+            if (!seen.has(base)) {
+              seen.add(base);
+              const price  = parseFloat(t.lastPrice);
+              const oi_raw = parseFloat(t.openInterest);
+              merged.push({
+                sym:     base,
+                exch:    'binance',
+                price,
+                volume:  parseFloat(t.quoteVolume),
+                oi:      !isNaN(oi_raw) ? oi_raw * price : null,
+                change:  parseFloat(t.priceChangePercent),
+              });
+            }
+          });
+      }
+    }
+
+    // ── Bybit (add only if base not already from Binance) ──
+    if (bybitRes && bybitRes.ok) {
+      const bybitData = await bybitRes.json();
+      const bybitList = bybitData.result?.list || [];
+      bybitList
+        .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.volume24h) > 0)
+        .sort((a, b) => {
+          const va = parseFloat(a.volume24h) * parseFloat(a.lastPrice);
+          const vb = parseFloat(b.volume24h) * parseFloat(b.lastPrice);
+          return vb - va;
+        })
+        .slice(0, 40)
+        .forEach(t => {
+          const base = t.symbol.replace('USDT', '');
+          if (!seen.has(base)) {
+            seen.add(base);
+            const price  = parseFloat(t.lastPrice);
+            const volUsd = parseFloat(t.volume24h) * price;
+            const oiUsd  = parseFloat(t.openInterest) * price;
+            merged.push({
+              sym:    base,
+              exch:   'bybit',
+              price,
+              volume: volUsd,
+              oi:     isNaN(oiUsd) ? null : oiUsd,
+              change: parseFloat(t.price24hPcnt) * 100,
+            });
+          }
+        });
+    }
+
+    // ── Sort merged by volume, keep top 15 ──
+    merged.sort((a, b) => b.volume - a.volume);
+    const top = merged.slice(0, 15);
+
+    if (!top.length) throw new Error('no data');
+
+    noteEl.textContent = `${top.length} pairs · Binance + Bybit · deduplicated`;
+
+    listEl.innerHTML = top.map((t, i) => {
+      const chgStr   = isNaN(t.change) ? '—' : (t.change >= 0 ? '+' : '') + t.change.toFixed(2) + '%';
+      const chgClass = isNaN(t.change) ? '' : t.change >= 0 ? 'up' : 'down';
+      const oiStr    = t.oi ? fmt(t.oi) : '—';
+      return `
+        <div class="tvol-row">
+          <span class="tvol-rank">${i + 1}</span>
+          <div class="tvol-sym-wrap">
+            <span class="tvol-sym">${t.sym}/USDT</span>
+            <span class="tvol-exch ${t.exch}">${t.exch === 'binance' ? 'Binance' : 'Bybit'}</span>
+          </div>
+          <span class="tvol-price">${fmtPrice(t.price)}</span>
+          <span class="tvol-volume">${fmt(t.volume)}</span>
+          <span class="tvol-oi">${oiStr}</span>
+          <span class="tvol-change ${chgClass}">${chgStr}</span>
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    noteEl.textContent = 'Failed to load';
+    listEl.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:11px;">Could not fetch volume data.</div>';
+  }
+}
+
+// ─────────────────────────────────────────────
+// MARKET OVERVIEW
+// ─────────────────────────────────────────────
+async function loadMarketOverview() {
+  try {
+    const res  = await fetch(`${GECKO_API}/global`);
+    const json = await res.json();
+    const d    = json.data;
+
+    const mcap    = d.total_market_cap?.usd || 0;
+    const vol     = d.total_volume?.usd || 0;
+    const markets = d.markets || 0;
+    const mcapPct = d.market_cap_change_percentage_24h_usd;
+    const oi      = d.open_interest_btc
+      ? null   // not always available
+      : null;
+
+    document.getElementById('moMarketCap').textContent = fmt(mcap);
+    document.getElementById('moVolume').textContent    = fmt(vol);
+    document.getElementById('moMarkets').textContent   = markets.toLocaleString();
+
+    if (mcapPct !== null && mcapPct !== undefined) {
+      const sign = mcapPct >= 0 ? '+' : '';
+      document.getElementById('moMarketCapChange').innerHTML =
+        `<span style="color:${mcapPct>=0?'var(--green)':'var(--red)'}">` +
+        `${sign}${mcapPct.toFixed(2)}% (24h)</span>`;
+    }
+
+    // Fetch total OI from Bybit
+    loadTotalOI();
+
+  } catch(e) {
+    document.getElementById('moMarketCap').textContent = '—';
+    document.getElementById('moVolume').textContent    = '—';
+    document.getElementById('moMarkets').textContent   = '—';
+  }
+}
+
+async function loadTotalOI() {
+  try {
+    // Bybit: sum top perp OIs
+    const res  = await fetch(`${BYBIT_API}/tickers?category=linear`);
+    const json = await res.json();
+    if (json.retCode !== 0) throw new Error();
+    const list = json.result?.list || [];
+    let totalOI = 0;
+    list.forEach(t => {
+      const oi = parseFloat(t.openInterest) * parseFloat(t.lastPrice);
+      if (!isNaN(oi)) totalOI += oi;
+    });
+    document.getElementById('moOI').textContent = fmt(totalOI);
+  } catch(e) {
+    // fallback CoinGecko global derivatives OI
+    try {
+      const res  = await fetch(`${GECKO_API}/derivatives`);
+      const list = await res.json();
+      let total = 0;
+      list.forEach(d => { if (d.open_interest) total += d.open_interest; });
+      document.getElementById('moOI').textContent = total > 0 ? fmt(total) : '—';
+    } catch(e2) {
+      document.getElementById('moOI').textContent = '—';
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// AUTO REFRESH
+// ─────────────────────────────────────────────
+function startRefreshCycle() {
+  const dot  = document.getElementById('refreshDot');
+  const text = document.getElementById('refreshText');
+  refreshCountdown = 60;
+  dot.classList.add('live');
+
+  clearInterval(marketRefreshTimer);
+  marketRefreshTimer = setInterval(() => {
+    refreshCountdown--;
+    if (refreshCountdown <= 0) {
+      refreshCountdown = 60;
+      loadAllMarketData();
+    }
+    text.textContent = `Refreshes in ${refreshCountdown}s`;
+  }, 1000);
+}
+
+async function loadAllMarketData() {
+  document.getElementById('refreshDot').classList.add('live');
+  await Promise.all([
+    loadMarketOverview(),
+    loadTopVolume(),
+  ]);
+}
+
+// ─────────────────────────────────────────────
+// TICKER FETCH HELPERS
+// ─────────────────────────────────────────────
+function setStatus(msg, show=true) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.style.display = show ? 'block' : 'none';
+}
+function setSpinner(show, text='') {
+  const el = document.getElementById('spinner');
+  el.style.display = show ? 'flex' : 'none';
+  if (text) document.getElementById('spinnerText').textContent = text;
+}
+function setSourceDot(active) {
+  document.getElementById('sourceDot').className = 'source-dot' + (active ? ' active' : '');
+}
+
+// ─────────────────────────────────────────────
+// EMA-CROSS TREND DETECTION
+// ─────────────────────────────────────────────
+function calcEMA(closes, period) {
+  if (closes.length < period) return null;
+  const k   = 2 / (period + 1);
+  let ema    = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < closes.length; i++) {
+    ema = closes[i] * k + ema * (1 - k);
+  }
+  return ema;
+}
+
+// Returns { trend, trendClass, trendDetail, ema9, ema21, ema50 }
+async function fetchTrend(sym, source) {
+  try {
+    let closes = [];
+
+    if (source === 'Binance Futures') {
+      // 60 x 4h candles (~10 days of history, plenty for EMA-50)
+      const res = await fetch(
+        `${BINANCE_FAPI}/klines?symbol=${sym}USDT&interval=4h&limit=60`
+      ).catch(() => null);
+      if (res && res.ok) {
+        const raw = await res.json();
+        closes = Array.isArray(raw) ? raw.map(c => parseFloat(c[4])) : [];
+      }
+    } else if (source === 'Bybit Linear') {
+      // Bybit kline: end=now, returns newest first — reverse after
+      const res = await fetch(
+        `${BYBIT_API}/kline?category=linear&symbol=${sym}USDT&interval=240&limit=60`
+      ).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        const list = data.result?.list || [];
+        // list[i] = [startTime, open, high, low, close, volume, turnover] — newest first
+        closes = list.map(c => parseFloat(c[4])).reverse();
+      }
+    } else {
+      // CoinGecko spot: use /coins/{id}/ohlc (free, no key, 30d / 4h bins)
+      // We already have the coin id from the gecko fetch path — re-search briefly
+      const searchRes = await fetch(
+        `${GECKO_API}/search?query=${sym}`
+      ).catch(() => null);
+      if (searchRes && searchRes.ok) {
+        const sd   = await searchRes.json();
+        const coin = sd.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase());
+        if (coin) {
+          const ohlcRes = await fetch(
+            `${GECKO_API}/coins/${coin.id}/ohlc?vs_currency=usd&days=30`
+          ).catch(() => null);
+          if (ohlcRes && ohlcRes.ok) {
+            const ohlc = await ohlcRes.json();
+            closes = ohlc.map(c => parseFloat(c[4]));
+          }
+        }
+      }
+    }
+
+    if (closes.length < 21) {
+      return { trend: 'Insufficient Data', trendClass: 'neutral', trendDetail: 'Need ≥21 candles', ema9: null, ema21: null, ema50: null };
+    }
+
+    const ema9  = calcEMA(closes, 9);
+    const ema21 = calcEMA(closes, 21);
+    const ema50 = closes.length >= 50 ? calcEMA(closes, 50) : null;
+    const last  = closes[closes.length - 1];
+
+    let trend, trendClass, trendDetail;
+
+    // Strong uptrend: price > ema9 > ema21 > ema50
+    // Strong downtrend: price < ema9 < ema21 < ema50
+    const priceAbove9  = last > ema9;
+    const priceAbove21 = last > ema21;
+    const ema9above21  = ema9 > ema21;
+    const above50      = ema50 ? ema21 > ema50 : null;
+
+    if (priceAbove9 && priceAbove21 && ema9above21 && (above50 === null || above50)) {
+      trend       = 'UPTREND';
+      trendClass  = 'bull';
+      trendDetail = ema50
+        ? `Price > EMA9 > EMA21 > EMA50 — full stack aligned bullish`
+        : `Price > EMA9 > EMA21 — short & mid EMAs aligned bullish`;
+    } else if (!priceAbove9 && !priceAbove21 && !ema9above21 && (above50 === null || !above50)) {
+      trend       = 'DOWNTREND';
+      trendClass  = 'bear';
+      trendDetail = ema50
+        ? `Price < EMA9 < EMA21 < EMA50 — full stack aligned bearish`
+        : `Price < EMA9 < EMA21 — short & mid EMAs aligned bearish`;
+    } else if (priceAbove21 && !ema9above21) {
+      trend       = 'RECOVERY';
+      trendClass  = 'warn';
+      trendDetail = `Price reclaimed EMA21 but EMA9 yet to cross above EMA21 — early recovery, not confirmed`;
+    } else if (!priceAbove21 && ema9above21) {
+      trend       = 'WEAKENING';
+      trendClass  = 'warn';
+      trendDetail = `EMA9 still above EMA21 but price below EMA21 — momentum fading, watch for cross`;
+    } else {
+      trend       = 'SIDEWAYS';
+      trendClass  = 'neutral';
+      trendDetail = `EMAs are mixed — no clear directional conviction on this timeframe (4h)`;
+    }
+
+    return { trend, trendClass, trendDetail, ema9, ema21, ema50 };
+
+  } catch(e) {
+    return { trend: 'Unavailable', trendClass: 'neutral', trendDetail: 'Could not fetch candle data', ema9: null, ema21: null, ema50: null };
+  }
+}
+
+async function fetchBinance(sym) {
+  const pair = sym.toUpperCase() + 'USDT';
+  const [tickerRes, oiRes, frRes] = await Promise.all([
+    fetch(`${BINANCE_FAPI}/ticker/24hr?symbol=${pair}`).catch(()=>null),
+    fetch(`${BINANCE_FAPI}/openInterest?symbol=${pair}`).catch(()=>null),
+    fetch(`${BINANCE_FAPI}/premiumIndex?symbol=${pair}`).catch(()=>null),
+  ]);
+  if (!tickerRes || !tickerRes.ok) return null;
+  const ticker = await tickerRes.json();
+  if (ticker.code) return null;
+  let oi = null, fr = null, markPrice = null, indexPrice = null, nextFrTime = null;
+  if (oiRes && oiRes.ok) {
+    const oiData = await oiRes.json();
+    oi = parseFloat(oiData.openInterest) * parseFloat(ticker.lastPrice);
+  }
+  if (frRes && frRes.ok) {
+    const frData = await frRes.json();
+    fr = parseFloat(frData.lastFundingRate) * 100;
+    markPrice  = parseFloat(frData.markPrice);
+    indexPrice = parseFloat(frData.indexPrice);
+    nextFrTime = frData.nextFundingTime;
+  }
+  return {
+    source: 'Binance Futures',
+    symbol: sym.toUpperCase(),
+    markPrice: markPrice || parseFloat(ticker.lastPrice),
+    indexPrice: indexPrice || parseFloat(ticker.lastPrice),
+    price: parseFloat(ticker.lastPrice),
+    change24h: parseFloat(ticker.priceChangePercent),
+    volume24h: parseFloat(ticker.quoteVolume),
+    openInterest: oi,
+    fundingRate: fr,
+    nextFrTime: nextFrTime,
+    fdv: null,
+  };
+}
+
+async function fetchBybit(sym) {
+  const pair = sym.toUpperCase() + 'USDT';
+  const res  = await fetch(`${BYBIT_API}/tickers?category=linear&symbol=${pair}`).catch(()=>null);
+  if (!res || !res.ok) return null;
+  const data = await res.json();
+  if (data.retCode !== 0 || !data.result?.list?.length) return null;
+  const t     = data.result.list[0];
+  const price = parseFloat(t.lastPrice);
+  const oi    = parseFloat(t.openInterest) * price;
+  const fr    = parseFloat(t.fundingRate) * 100;
+  return {
+    source: 'Bybit Linear',
+    symbol: sym.toUpperCase(),
+    markPrice: parseFloat(t.markPrice) || price,
+    indexPrice: parseFloat(t.indexPrice) || price,
+    price,
+    change24h: parseFloat(t.price24hPcnt) * 100,
+    volume24h: parseFloat(t.volume24h) * price,
+    openInterest: isNaN(oi) ? null : oi,
+    fundingRate: isNaN(fr) ? null : fr,
+    nextFrTime: null,
+    fdv: null,
+  };
+}
+
+async function fetchGecko(sym) {
+  const searchRes = await fetch(`${GECKO_API}/search?query=${sym}`).catch(()=>null);
+  if (!searchRes || !searchRes.ok) return null;
+  const searchData = await searchRes.json();
+  const coin = searchData.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase());
+  if (!coin) return null;
+  const detailRes = await fetch(`${GECKO_API}/coins/${coin.id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`).catch(()=>null);
+  if (!detailRes || !detailRes.ok) return null;
+  const d  = await detailRes.json();
+  const md = d.market_data;
+  return {
+    source: 'CoinGecko (Spot)',
+    symbol: sym.toUpperCase(),
+    markPrice: md.current_price?.usd || null,
+    indexPrice: md.current_price?.usd || null,
+    price: md.current_price?.usd || null,
+    change24h: md.price_change_percentage_24h || null,
+    volume24h: md.total_volume?.usd || null,
+    openInterest: null,
+    fundingRate: null,
+    nextFrTime: null,
+    fdv: md.fully_diluted_valuation?.usd || null,
+  };
+}
+
+function prevOIKey(sym) { return `atl_oi_prev_${sym}`; }
+
+// ─────────────────────────────────────────────
+// BIAS ENGINE — plain-language rewrite
+// ─────────────────────────────────────────────
+const VERDICTS = {
+  strongBull: {
+    verdict: 'Strong Buy Conditions',
+    sub:     'Multiple signals align in favour of buyers. Open Interest is growing alongside price, and funding rates are not yet overextended. Conditions are healthy for long positions.',
+    cls:     'long',
+  },
+  cautBull: {
+    verdict: 'Leaning Bullish — Proceed With Caution',
+    sub:     'More bullish signals than bearish, but the setup is not clean. Consider smaller position sizing and tighter stops.',
+    cls:     'long',
+  },
+  neutral: {
+    verdict: 'No Clear Direction — Market Is Undecided',
+    sub:     'Signals are mixed or absent. There is no reliable edge here. Wait for a cleaner setup before committing capital.',
+    cls:     'neutral',
+  },
+  cautBear: {
+    verdict: 'Leaning Bearish — Selling Pressure Building',
+    sub:     'More bearish signals than bullish. The market is showing early signs of distribution. Avoid fresh longs. If short, keep size modest.',
+    cls:     'short',
+  },
+  strongBear: {
+    verdict: 'High Risk — Data Favours Sellers',
+    sub:     'Multiple bearish signals firing simultaneously. Longs are in danger of being squeezed or stopped out. Not a safe environment to buy.',
+    cls:     'short',
+  },
+  avoid: {
+    verdict: 'Avoid This Market — Liquidity Too Low',
+    sub:     'Trading volume is dangerously thin. Low liquidity means prices can be moved easily by a single large player, making every signal unreliable. Step aside.',
+    cls:     'avoid',
+  },
+};
+
+const SIGNAL_MSGS = {
+  // OI
+  oiLongBuildup:  'Open Interest is rising while price moves up — this means new money is entering on the buy side. Fresh buyers are stepping in aggressively. Bullish.',
+  oiShortBuildup: 'Open Interest is rising while price is falling — new money is entering on the sell side. Fresh sellers are committing to lower prices. Bearish.',
+  oiShortCover:   'Open Interest is dropping while price is rising — this rally is shorts closing their positions, not new buyers entering. The move may lack conviction and could fade.',
+  oiLongUnwind:   'Open Interest is dropping while price falls — longs are exiting their positions. Bearish pressure exists, but it may slow as sellers exit.',
+  oiStable:       'Open Interest is stable with no significant change. There is no strong directional conviction from derivatives positioning right now.',
+  oiNoHistory:    'This is the first time fetching this coin. Open Interest trend will appear on the next search as the tool now has a baseline to compare.',
+
+  // Funding Rate
+  frExtremeLong:  'Funding rate is extremely high — longs are paying a large premium to hold their positions. When funding gets this crowded, a sharp drop often follows to flush them out. Be careful.',
+  frMildLong:     'Funding rate is slightly elevated — longs are paying shorts. This suggests mild bullish bias in the market, but watch for this to increase further.',
+  frExtremeShort: 'Funding rate is deeply negative — shorts are paying longs. The market is very crowded on the sell side. A sudden sharp squeeze upward is possible if any positive catalyst appears.',
+  frMildShort:    'Funding rate is mildly negative — shorts are paying longs. Slight bearish lean in positioning, but not yet at squeeze territory.',
+  frNeutral:      'Funding rate is near zero — neither longs nor shorts are paying a significant premium. No extreme directional positioning detected.',
+
+  // Volume
+  volVeryLow:  'Volume relative to this coin\'s total market size is extremely small. This means a single large trade can swing the price significantly. All signals here should be treated with scepticism.',
+  volLow:      'Volume is below average for this coin\'s market cap. Liquidity is reduced. Be cautious with position sizing and watch for wide spreads.',
+  volHealthy:  'Volume is healthy and proportionate to the market size. Signals from this coin are more likely to be reliable.',
+  volAbsLow:   '24h trading volume is below $500K. This coin barely trades. Price can be manipulated easily by a small number of players. Avoid until volume improves.',
+  volAbsMod:   '24h volume is modest. Acceptable for smaller positions, but not ideal for meaningful size.',
+  volAbsHigh:  '24h volume is strong. There is good market participation and liquidity to support reliable trading.',
+
+  // Spot only
+  spotOnly:    'Data is from the spot market only — Open Interest and Funding Rate are not available. The bias is based on price action and volume alone, which gives an incomplete picture.',
+};
+
+function computeBias(data) {
+  const signals  = [];
+  let bullScore  = 0;
+  let bearScore  = 0;
+
+  const { openInterest, fundingRate, volume24h, fdv, change24h, symbol, source } = data;
+  const prevOI   = parseFloat(localStorage.getItem(prevOIKey(symbol)) || '0');
+  const oiTrend  = (prevOI && openInterest) ? ((openInterest - prevOI) / prevOI * 100) : null;
+  if (openInterest) localStorage.setItem(prevOIKey(symbol), openInterest);
+
+  const isFutures = source !== 'CoinGecko (Spot)';
+
+  if (!isFutures) {
+    signals.push({ icon: 'warn', text: SIGNAL_MSGS.spotOnly });
+  }
+
+  // ── OI Analysis ──
+  if (openInterest !== null && oiTrend !== null) {
+    if (oiTrend > 1 && change24h > 0) {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.oiLongBuildup });
+      bullScore += 2;
+    } else if (oiTrend > 1 && change24h < 0) {
+      signals.push({ icon: 'bear', text: SIGNAL_MSGS.oiShortBuildup });
+      bearScore += 2;
+    } else if (oiTrend < -1 && change24h > 0) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.oiShortCover });
+      bearScore += 1;
+    } else if (oiTrend < -1 && change24h < 0) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.oiLongUnwind });
+      bearScore += 1;
+    } else {
+      signals.push({ icon: 'info', text: SIGNAL_MSGS.oiStable });
+    }
+  } else if (isFutures && openInterest !== null) {
+    signals.push({ icon: 'info', text: SIGNAL_MSGS.oiNoHistory });
+  }
+
+  // ── Funding Rate Analysis ──
+  if (fundingRate !== null) {
+    const fr = fundingRate;
+    if (fr >= 0.05) {
+      signals.push({ icon: 'bear', text: SIGNAL_MSGS.frExtremeLong });
+      bearScore += 2;
+    } else if (fr >= 0.01) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.frMildLong });
+      bearScore += 0.5;
+    } else if (fr <= -0.05) {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.frExtremeShort });
+      bullScore += 2;
+    } else if (fr <= -0.01) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.frMildShort });
+      bullScore += 0.5;
+    } else {
+      signals.push({ icon: 'info', text: SIGNAL_MSGS.frNeutral });
+    }
+  }
+
+  // ── Volume Analysis ──
+  if (volume24h !== null && fdv !== null) {
+    const ratio = volume24h / fdv;
+    if (ratio < 0.002) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.volVeryLow });
+      bearScore += 1;
+    } else if (ratio < 0.01) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.volLow });
+    } else {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.volHealthy });
+      bullScore += 0.5;
+    }
+  } else if (volume24h !== null) {
+    if (volume24h < 500000) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.volAbsLow });
+      bearScore += 1;
+    } else if (volume24h < 5000000) {
+      signals.push({ icon: 'info', text: SIGNAL_MSGS.volAbsMod });
+    } else {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.volAbsHigh });
+      bullScore += 0.5;
+    }
+  }
+
+  // ── Verdict ──
+  const lowLiq = signals.find(s =>
+    s.text.includes('barely trades') || s.text.includes('$500K') || s.text.includes('dangerously thin') || s.text.includes('below $500K')
+  );
+
+  let v;
+  const total = bullScore + bearScore;
+  if (lowLiq) {
+    v = VERDICTS.avoid;
+  } else if (total === 0) {
+    v = VERDICTS.neutral;
+  } else if (bearScore >= 3 && bearScore > bullScore * 1.5) {
+    v = VERDICTS.strongBear;
+  } else if (bearScore > bullScore) {
+    v = VERDICTS.cautBear;
+  } else if (bullScore >= 3 && bullScore > bearScore * 1.5) {
+    v = VERDICTS.strongBull;
+  } else if (bullScore > bearScore) {
+    v = VERDICTS.cautBull;
+  } else {
+    v = VERDICTS.neutral;
+  }
+
+  return { ...v, signals, bullScore, bearScore };
+}
+
+// ─────────────────────────────────────────────
+// DASHBOARD TABLE
+// ─────────────────────────────────────────────
+function buildDashboard(data, bias, trendObj) {
+  const { openInterest, fundingRate, volume24h, change24h, source } = data;
+  const isFutures = source !== 'CoinGecko (Spot)';
+  const prevOI    = parseFloat(localStorage.getItem(prevOIKey(data.symbol)) || '0');
+  const oiTrend   = (prevOI && openInterest) ? ((openInterest - prevOI) / prevOI * 100) : null;
+
+  let oiStatus = '—', oiClass = 'neutral', oiReading = 'No previous session data';
+  if (oiTrend !== null) {
+    if (oiTrend > 1 && change24h > 0)       { oiStatus = 'LONG BUILDUP';  oiClass = 'bull'; oiReading = `OI +${oiTrend.toFixed(1)}% · Price +${change24h.toFixed(2)}%`; }
+    else if (oiTrend > 1 && change24h < 0)  { oiStatus = 'SHORT BUILDUP'; oiClass = 'bear'; oiReading = `OI +${oiTrend.toFixed(1)}% · Price ${change24h.toFixed(2)}%`; }
+    else if (oiTrend < -1 && change24h > 0) { oiStatus = 'SHORT COVER';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% · Weak rally`; }
+    else if (oiTrend < -1 && change24h < 0) { oiStatus = 'LONG UNWIND';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% · Sellers exiting`; }
+    else { oiStatus = 'STABLE'; oiClass = 'neutral'; oiReading = `OI Δ${oiTrend.toFixed(1)}%`; }
+  } else if (!isFutures) { oiReading = 'Spot data — not available'; }
+
+  let frStatus = '—', frClass = 'neutral', frReading = '—';
+  if (fundingRate !== null) {
+    if (fundingRate >= 0.05)       { frStatus = 'LONGS OVERCROWDED'; frClass = 'bear'; frReading = `${fundingRate.toFixed(4)}% · Squeeze risk`; }
+    else if (fundingRate >= 0.01)  { frStatus = 'MILD LONG BIAS';    frClass = 'warn'; frReading = `${fundingRate.toFixed(4)}% · Watch funding`; }
+    else if (fundingRate <= -0.05) { frStatus = 'SHORTS OVERCROWDED';frClass = 'bull'; frReading = `${fundingRate.toFixed(4)}% · Squeeze risk`; }
+    else if (fundingRate <= -0.01) { frStatus = 'MILD SHORT BIAS';   frClass = 'warn'; frReading = `${fundingRate.toFixed(4)}% · Watch funding`; }
+    else { frStatus = 'NEUTRAL'; frClass = 'neutral'; frReading = `${fundingRate.toFixed(4)}%`; }
+  } else if (!isFutures) { frReading = 'Spot data — not available'; }
+
+  let volStatus = '—', volClass = 'neutral', volReading = fmt(volume24h);
+  if (volume24h < 500000)   { volStatus = 'DANGEROUSLY LOW'; volClass = 'warn'; volReading += ' · Avoid'; }
+  else if (volume24h < 5e6) { volStatus = 'MODERATE';        volClass = 'neutral'; }
+  else                       { volStatus = 'HEALTHY';         volClass = 'bull'; }
+
+  // ── Trend row ──
+  const trendStatus  = trendObj ? trendObj.trend      : '—';
+  const trendClass   = trendObj ? trendObj.trendClass : 'neutral';
+  const trendReading = trendObj ? trendObj.trendDetail : 'Not computed';
+
+  const rows = [
+    { factor: 'Overall Trend (4h EMA)', status: trendStatus,              statusClass: trendClass,  reading: trendReading },
+    { factor: 'OI & Price Action',      status: oiStatus,                 statusClass: oiClass,     reading: oiReading },
+    { factor: 'Funding Rate',           status: frStatus,                 statusClass: frClass,     reading: frReading },
+    { factor: '24h Volume',             status: volStatus,                statusClass: volClass,    reading: volReading },
+    { factor: 'Overall Bias',           status: bias.verdict.split('—')[0].trim(), statusClass: bias.cls, reading: `${bias.bullScore} bullish · ${bias.bearScore} bearish signals` },
+  ];
+
+  document.getElementById('dashboard').innerHTML = `
+    <div class="dash-header">
+      <span>Factor</span><span>Status</span><span>Reading</span>
+    </div>
+    ${rows.map(r => `
+      <div class="dash-row">
+        <span class="dash-factor">${r.factor}</span>
+        <span class="dash-status ${r.statusClass}">${r.status}</span>
+        <span class="dash-reading">${r.reading}</span>
+      </div>`).join('')}
+  `;
+}
+
+// ─────────────────────────────────────────────
+// RENDER RESULT
+// ─────────────────────────────────────────────
+async function renderResult(data) {
+  lastData = data;
+  const bias = computeBias(data);
+
+  document.getElementById('resultSection').style.display = 'block';
+  document.getElementById('coinSymbol').textContent = data.symbol;
+  document.getElementById('coinPrice').textContent  = fmtPrice(data.price);
+
+  const chEl = document.getElementById('coinChange');
+  chEl.textContent = data.change24h !== null ? (data.change24h >= 0 ? '+' : '') + data.change24h.toFixed(2) + '%' : '—';
+  chEl.className   = 'coin-change ' + (data.change24h >= 0 ? 'up' : 'down');
+
+  document.getElementById('sourceBadge').textContent = data.source;
+
+  const isFutures = data.source !== 'CoinGecko (Spot)';
+
+  const frDisplay = data.fundingRate !== null
+    ? { val: data.fundingRate.toFixed(4) + '%', cls: data.fundingRate > 0.01 ? 'red' : data.fundingRate < -0.01 ? 'green' : 'blue', sub: data.fundingRate > 0 ? 'Longs paying shorts' : 'Shorts paying longs' }
+    : { val: '—', cls: '', sub: 'Spot data only' };
+
+  const oiDisplay = data.openInterest !== null
+    ? { val: fmt(data.openInterest), cls: 'blue', sub: 'USD notional' }
+    : { val: '—', cls: '', sub: isFutures ? 'Unavailable' : 'Spot data only' };
+
+  const cells = [
+    { label: 'Mark Price',    val: fmtPrice(data.markPrice),   cls: 'green', sub: 'Futures mark' },
+    { label: 'Index Price',   val: fmtPrice(data.indexPrice),  cls: '',      sub: 'Spot reference' },
+    { label: '24h Volume',    val: fmt(data.volume24h),        cls: data.volume24h > 5e6 ? 'green' : data.volume24h < 5e5 ? 'red' : 'gold', sub: 'Quote volume' },
+    { label: '24h Change',    val: (data.change24h !== null ? (data.change24h >= 0 ? '+' : '') + data.change24h.toFixed(2) + '%' : '—'), cls: data.change24h >= 0 ? 'green' : 'red', sub: 'Price delta' },
+    { label: 'Open Interest', val: oiDisplay.val,              cls: oiDisplay.cls, sub: oiDisplay.sub },
+    { label: 'Funding Rate',  val: frDisplay.val,              cls: frDisplay.cls, sub: frDisplay.sub },
+    { label: 'FDV',           val: data.fdv ? fmt(data.fdv) : '—', cls: 'gold', sub: 'Fully diluted' },
+  ];
+
+  document.getElementById('dataGrid').innerHTML = cells.map(c => `
+    <div class="data-cell">
+      <div class="data-label">${c.label}</div>
+      <div class="data-value ${c.cls}">${c.val}</div>
+      <div class="data-sub">${c.sub}</div>
+    </div>`).join('');
+
+  // ── Render dashboard immediately with trend loading state ──
+  buildDashboard(data, bias, { trend: 'Fetching...', trendClass: 'neutral', trendDetail: 'Computing EMA-cross on 4h candles...' });
+
+  document.getElementById('biasVerdict').textContent  = bias.verdict;
+  document.getElementById('biasVerdict').className    = 'bias-verdict ' + bias.cls;
+  document.getElementById('biasSubText').textContent  = bias.sub;
+  document.getElementById('biasScorePills').innerHTML =
+    `<div class="score-pill bull">▲ ${bias.bullScore} Bullish</div>` +
+    `<div class="score-pill bear">▼ ${bias.bearScore} Bearish</div>`;
+
+  document.getElementById('biasSignals').innerHTML = bias.signals.map(s => `
+    <div class="signal-row">
+      <div class="signal-icon ${s.icon}">${s.icon === 'bull' ? '▲' : s.icon === 'bear' ? '▼' : s.icon === 'warn' ? '!' : s.icon === 'info' ? 'i' : '—'}</div>
+      <span>${s.text}</span>
+    </div>`).join('');
+
+  document.querySelectorAll('.reveal').forEach(el => {
+    setTimeout(() => el.classList.add('visible'), 50);
+  });
+
+  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // ── Fetch trend async, update dashboard when ready ──
+  const trendObj = await fetchTrend(data.symbol, data.source);
+
+  // Factor trend into bias score for updated verdict
+  let updatedBull = bias.bullScore;
+  let updatedBear = bias.bearScore;
+  if (trendObj.trendClass === 'bull')    updatedBull += 1.5;
+  else if (trendObj.trendClass === 'bear') updatedBear += 1.5;
+  else if (trendObj.trendClass === 'warn') { updatedBull += 0.25; updatedBear += 0.25; }
+
+  const updatedBias = { ...bias, bullScore: updatedBull, bearScore: updatedBear };
+
+  buildDashboard(data, updatedBias, trendObj);
+
+  // Refresh verdict with trend factored in
+  const VERDICTS_REF = {
+    strongBull: { verdict: 'Strong Buy Conditions',            sub: bias.sub, cls: 'long'    },
+    cautBull:   { verdict: 'Leaning Bullish — Proceed With Caution', sub: bias.sub, cls: 'long' },
+    neutral:    { verdict: 'No Clear Direction — Market Is Undecided', sub: bias.sub, cls: 'neutral' },
+    cautBear:   { verdict: 'Leaning Bearish — Selling Pressure Building', sub: bias.sub, cls: 'short' },
+    strongBear: { verdict: 'High Risk — Data Favours Sellers',  sub: bias.sub, cls: 'short'   },
+    avoid:      { verdict: 'Avoid This Market — Liquidity Too Low', sub: bias.sub, cls: 'avoid' },
+  };
+  const lowLiq = bias.signals.find(s =>
+    s.text.includes('barely trades') || s.text.includes('$500K') || s.text.includes('dangerously thin') || s.text.includes('below $500K')
+  );
+  let finalVerdict;
+  if (lowLiq) { finalVerdict = VERDICTS_REF.avoid; }
+  else if (updatedBear >= 3 && updatedBear > updatedBull * 1.5) { finalVerdict = VERDICTS_REF.strongBear; }
+  else if (updatedBear > updatedBull)  { finalVerdict = VERDICTS_REF.cautBear; }
+  else if (updatedBull >= 3 && updatedBull > updatedBear * 1.5) { finalVerdict = VERDICTS_REF.strongBull; }
+  else if (updatedBull > updatedBear)  { finalVerdict = VERDICTS_REF.cautBull; }
+  else { finalVerdict = VERDICTS_REF.neutral; }
+
+  document.getElementById('biasVerdict').textContent = finalVerdict.verdict;
+  document.getElementById('biasVerdict').className   = 'bias-verdict ' + finalVerdict.cls;
+  document.getElementById('biasScorePills').innerHTML =
+    `<div class="score-pill bull">▲ ${updatedBull} Bullish</div>` +
+    `<div class="score-pill bear">▼ ${updatedBear} Bearish</div>`;
+}
+
+// ─────────────────────────────────────────────
+// MAIN FETCH
+// ─────────────────────────────────────────────
+async function fetchData() {
+  const raw = document.getElementById('tickerInput').value.trim();
+  if (!raw) return;
+  const sym = raw.toUpperCase().replace(/USDT|BUSD|USD|PERP/gi, '');
+
+  setStatus('', false);
+  setSpinner(true, `Querying Binance Futures for ${sym}USDT...`);
+  setSourceDot(true);
+  document.getElementById('fetchBtn').disabled = true;
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('sourceText').textContent = `Checking Binance Futures → Bybit → CoinGecko...`;
+
+  let data = null;
+
+  try { data = await fetchBinance(sym); if (data) document.getElementById('sourceText').textContent = `Live data from Binance Futures`; } catch(e) {}
+  if (!data) {
+    setSpinner(true, `Not on Binance. Trying Bybit...`);
+    try { data = await fetchBybit(sym); if (data) document.getElementById('sourceText').textContent = `Live data from Bybit Linear`; } catch(e) {}
+  }
+  if (!data) {
+    setSpinner(true, `Trying CoinGecko (spot)...`);
+    try { data = await fetchGecko(sym); if (data) document.getElementById('sourceText').textContent = `Spot data from CoinGecko (no OI/Funding)`; } catch(e) {}
+  }
+
+  setSpinner(false);
+  setSourceDot(false);
+  document.getElementById('fetchBtn').disabled = false;
+
+  if (!data) {
+    setStatus(`"${sym}" not found on Binance Futures, Bybit, or CoinGecko. Check the ticker and try again.`);
+    document.getElementById('sourceText').textContent = `Binance Futures → Bybit → CoinGecko fallback chain`;
+    return;
+  }
+
+  await renderResult(data);
+}
+
+document.getElementById('tickerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fetchData();
+});
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+(async function init() {
+  await loadAllMarketData();
+  startRefreshCycle();
+  document.getElementById('refreshText').textContent = `Refreshes in 60s`;
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+})();
+</script>
+</body>
+</html>
