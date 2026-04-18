@@ -1083,10 +1083,290 @@ footer {
   line-height: 1.6;
 }
 
-@media (max-width: 900px) {
-  .tvol-col-heads, .tvol-row { grid-template-columns: 28px 1fr 90px 90px 70px; }
-  .tvol-col-heads .tvol-oi-col, .tvol-row .tvol-oi { display: none; }
+/* ── TICKER BAR ── */
+.ticker-bar {
+  position: fixed;
+  top: 56px; left: 0; right: 0;
+  z-index: 99;
+  height: 36px;
+  background: rgba(8,11,15,0.96);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
 }
+.ticker-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  height: 100%;
+}
+.ticker-nav-btn {
+  height: 100%;
+  padding: 0 14px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  font-family: 'Syne', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
+}
+.ticker-nav-btn:hover {
+  color: var(--green);
+  background: var(--green-dim);
+}
+.ticker-bar-sep {
+  width: 1px;
+  height: 100%;
+  background: var(--border);
+}
+.ticker-track-wrap {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+  position: relative;
+  /* Fade edges */
+  mask-image: linear-gradient(to right, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%);
+}
+.ticker-track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+}
+.ticker-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  animation: tickerScroll 60s linear infinite;
+  will-change: transform;
+}
+.ticker-inner:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-loading {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 300;
+  padding: 0 20px;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  height: 36px;
+  cursor: default;
+}
+.ticker-item-sym {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+.ticker-item-val {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--sub);
+}
+.ticker-item-chg {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+.ticker-item-chg.up   { color: var(--green); }
+.ticker-item-chg.down { color: var(--red); }
+.ticker-sep-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 36px;
+  font-family: 'Syne', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  gap: 6px;
+}
+.ticker-sep-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.ticker-mcap-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  height: 36px;
+}
+.ticker-mcap-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ticker-mcap-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ticker-mcap-val.green { color: var(--green); }
+.ticker-mcap-val.blue  { color: var(--blue); }
+
+/* ── Adjust main top padding to clear nav + ticker bar ── */
+main {
+  padding-top: 116px !important;
+}
+
+/* ── TICKER BAR ── */
+.workflow-section {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 40px;
+  background: var(--bg2);
+}
+.workflow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.workflow-tag {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.25);
+  background: var(--green-dim);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+.workflow-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--sub);
+  letter-spacing: 0.02em;
+}
+.workflow-disc-icon {
+  width: 16px; height: 16px;
+  border-radius: 2px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(255,213,79,0.2);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.workflow-steps {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.workflow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 14px 0;
+}
+.workflow-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.06);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 32px;
+  padding-top: 2px;
+}
+.workflow-body { flex: 1; }
+.workflow-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.workflow-desc {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--sub);
+  line-height: 1.75;
+  max-width: 720px;
+}
+.workflow-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 0 0 52px;
+}
+.workflow-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+}
+.workflow-footer-col {
+  padding: 16px 24px;
+}
+.workflow-footer-divider {
+  width: 1px;
+  background: var(--border);
+}
+.workflow-footer-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.workflow-footer-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .workflow-footer { grid-template-columns: 1fr; }
+  .workflow-footer-divider { width: 100%; height: 1px; }
+  .workflow-header { flex-direction: column; align-items: flex-start; }
+}
+
 </style>
 </head>
 <body>
@@ -1101,6 +1381,22 @@ footer {
     <div class="nav-badge">Derivatives Intel</div>
   </div>
 </nav>
+
+<!-- ── TICKER BAR ── -->
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-bar-left">
+    <button class="ticker-nav-btn" onclick="scrollToTable('volume')">TOP VOLUME ↓</button>
+    <button class="ticker-nav-btn" onclick="scrollToTable('nfr')">NEG. FUNDING ↓</button>
+    <div class="ticker-bar-sep"></div>
+  </div>
+  <div class="ticker-track-wrap">
+    <div class="ticker-track" id="tickerTrack">
+      <div class="ticker-inner" id="tickerInner">
+        <span class="ticker-loading">Loading market data...</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <main>
 
@@ -1232,29 +1528,83 @@ footer {
     </div>
   </div>
 
-  <div style="height:48px;"></div>
+  <!-- ── HOW TO USE THIS TOOL ── -->
+  <div class="workflow-section reveal">
+    <div class="workflow-header">
+      <div class="workflow-tag">Methodology</div>
+      <div class="workflow-disclaimer">
+        <span class="workflow-disc-icon">!</span>
+        This is not a signal tool — the scanner narrows the field. Your chart analysis makes the decision.
+      </div>
+    </div>
 
-  <!-- ── MARKET OVERVIEW ── -->
-  <div class="market-overview" id="marketOverview">
-    <div class="mo-cell">
-      <div class="mo-label">Crypto Market Cap</div>
-      <div class="mo-value" id="moMarketCap"><div class="skeleton" style="width:120px;height:22px;"></div></div>
-      <div class="mo-sub" id="moMarketCapChange">&nbsp;</div>
+    <div class="workflow-steps">
+
+      <div class="workflow-step">
+        <div class="workflow-num">01</div>
+        <div class="workflow-body">
+          <div class="workflow-title">SCAN THE MARKET</div>
+          <div class="workflow-desc">Hit Scan All Pairs. The tool checks 300–500 futures pairs simultaneously — funding rate, OI delta, OI velocity, 4h momentum — and scores every coin.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">02</div>
+        <div class="workflow-body">
+          <div class="workflow-title">BUILD YOUR WATCHLIST</div>
+          <div class="workflow-desc">Review the top coins flagged as PUMP, DUMP, or BUILDING. These are the pairs with derivatives conditions loaded — not random picks. Ignore FIRING and DONE entirely.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">03</div>
+        <div class="workflow-body">
+          <div class="workflow-title">OPEN THE CHART</div>
+          <div class="workflow-desc">Analyse each shortlisted coin independently. Apply your own price action and market structure analysis on the 1H chart — BOS, CHoCH, supply and demand zones, key levels. Do this with zero bias from the scanner.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">04</div>
+        <div class="workflow-body">
+          <div class="workflow-title">LOOK FOR CONFLUENCE</div>
+          <div class="workflow-desc">Only proceed if your chart analysis agrees with the scanner bias. Scanner says PUMP and your chart shows bullish structure at a key demand zone — that is confluence. If they disagree, skip the coin entirely.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">05</div>
+        <div class="workflow-body">
+          <div class="workflow-title">WAIT FOR YOUR TRIGGER</div>
+          <div class="workflow-desc">Drop to your lower timeframe — 15M or 5M. Wait for a structural trigger: CHoCH, FVG fill, order block reaction, liquidity sweep. That is your entry. The scanner told you where to look. Your trigger tells you when.</div>
+        </div>
+      </div>
+
     </div>
-    <div class="mo-cell">
-      <div class="mo-label">24h Trading Volume</div>
-      <div class="mo-value blue" id="moVolume"><div class="skeleton" style="width:100px;height:22px;"></div></div>
-      <div class="mo-sub" id="moVolumeNote">&nbsp;</div>
-    </div>
-    <div class="mo-cell">
-      <div class="mo-label">Total Markets</div>
-      <div class="mo-value" id="moMarkets"><div class="skeleton" style="width:60px;height:22px;"></div></div>
-      <div class="mo-sub">Active trading pairs</div>
-    </div>
-    <div class="mo-cell">
-      <div class="mo-label">Open Interest</div>
-      <div class="mo-value green" id="moOI"><div class="skeleton" style="width:90px;height:22px;"></div></div>
-      <div class="mo-sub">Crypto futures OI</div>
+
+    <div class="workflow-footer">
+      <div class="workflow-footer-col">
+        <div class="workflow-footer-label">Scanner's job</div>
+        <div class="workflow-footer-val">Narrow 500 pairs → 10 worth watching</div>
+      </div>
+      <div class="workflow-footer-divider"></div>
+      <div class="workflow-footer-col">
+        <div class="workflow-footer-label">Your job</div>
+        <div class="workflow-footer-val">Confirm structure · Find the trigger · Manage the trade</div>
+      </div>
+      <div class="workflow-footer-divider"></div>
+      <div class="workflow-footer-col">
+        <div class="workflow-footer-label">Rescan cadence</div>
+        <div class="workflow-footer-val">Every 1–2 hours · Setups expire · Data goes stale</div>
+      </div>
     </div>
   </div>
 
@@ -1491,6 +1841,10 @@ async function loadTopVolume() {
 
     if (!top.length) throw new Error('no data');
 
+    // ── Store top coins for ticker bar ──
+    window._tickerCoins = top;
+    tryBuildTicker();
+
     noteEl.textContent = activeTab === 'volume'
       ? `${top.length} pairs · Binance + Bybit · deduplicated`
       : `${Math.min(nfrAll.length, 25)} coins · most negative first`;
@@ -1562,6 +1916,90 @@ function renderNfr() {
 }
 
 // ─────────────────────────────────────────────
+// SCROLL TO TABLE (ticker bar buttons)
+// ─────────────────────────────────────────────
+function scrollToTable(tab) {
+  switchTab(tab);
+  const el = document.querySelector('.tvol-card');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─────────────────────────────────────────────
+// TICKER BAR BUILDER
+// ─────────────────────────────────────────────
+function buildTickerBar(mcap, mcapPct, vol24h, markets, oi, topCoins) {
+  const inner = document.getElementById('tickerInner');
+  if (!inner) return;
+
+  function fmtT(n) {
+    if (!n || isNaN(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+    return '$' + n.toFixed(2);
+  }
+  function fmtPx(n) {
+    if (!n || isNaN(n)) return '—';
+    if (n >= 1000) return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
+    if (n >= 1)    return '$' + n.toFixed(4);
+    if (n >= 0.01) return '$' + n.toFixed(5);
+    return '$' + n.toFixed(8);
+  }
+
+  const mcapSign  = mcapPct >= 0 ? '+' : '';
+  const mcapColor = mcapPct >= 0 ? 'green' : 'red';
+
+  // Build market overview items
+  let html = '';
+
+  // Market overview metrics
+  const metrics = [
+    { label: 'MKT CAP', val: fmtT(mcap), extra: mcap ? `<span class="ticker-item-chg ${mcapColor}">${mcapSign}${mcapPct?.toFixed(2)}%</span>` : '' },
+    { label: '24H VOL', val: fmtT(vol24h), cls: 'blue' },
+    { label: 'MARKETS', val: markets ? markets.toLocaleString() : '—' },
+    { label: 'FUTURES OI', val: fmtT(oi), cls: 'green' },
+  ];
+
+  metrics.forEach(m => {
+    html += `
+      <div class="ticker-mcap-item">
+        <span class="ticker-mcap-label">${m.label}</span>
+        <span class="ticker-mcap-val ${m.cls||''}">${m.val}</span>
+        ${m.extra || ''}
+      </div>`;
+  });
+
+  // Separator
+  html += `<div class="ticker-sep-label"><div class="ticker-sep-dot"></div>TOP VOLUME</div>`;
+
+  // Top coins from exchange
+  topCoins.forEach(c => {
+    const chg    = isNaN(c.change) ? null : c.change;
+    const chgStr = chg !== null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '';
+    const chgCls = chg !== null ? (chg >= 0 ? 'up' : 'down') : '';
+    html += `
+      <div class="ticker-item">
+        <span class="ticker-item-sym">${c.sym}/USDT</span>
+        <span class="ticker-item-val">${fmtPx(c.price)}</span>
+        ${chgStr ? `<span class="ticker-item-chg ${chgCls}">${chgStr}</span>` : ''}
+      </div>`;
+  });
+
+  // Duplicate for seamless loop
+  const content = html;
+  inner.innerHTML = content + content;
+
+  // Adjust animation duration based on content width — longer content = slower scroll
+  // Allow DOM to paint first
+  requestAnimationFrame(() => {
+    const totalW = inner.scrollWidth / 2; // half because duplicated
+    const speed  = 80; // px per second
+    const dur    = Math.max(30, totalW / speed);
+    inner.style.animationDuration = dur + 's';
+  });
+}
+
+// ─────────────────────────────────────────────
 // MARKET OVERVIEW
 // ─────────────────────────────────────────────
 async function loadMarketOverview() {
@@ -1573,57 +2011,52 @@ async function loadMarketOverview() {
     const mcap    = d.total_market_cap?.usd || 0;
     const vol     = d.total_volume?.usd || 0;
     const markets = d.markets || 0;
-    const mcapPct = d.market_cap_change_percentage_24h_usd;
-    const oi      = d.open_interest_btc
-      ? null   // not always available
-      : null;
+    const mcapPct = d.market_cap_change_percentage_24h_usd || 0;
 
-    document.getElementById('moMarketCap').textContent = fmt(mcap);
-    document.getElementById('moVolume').textContent    = fmt(vol);
-    document.getElementById('moMarkets').textContent   = markets.toLocaleString();
+    // Store for ticker bar — will be combined with top coins after loadTopVolume
+    window._tickerMeta = { mcap, vol, markets, mcapPct };
 
-    if (mcapPct !== null && mcapPct !== undefined) {
-      const sign = mcapPct >= 0 ? '+' : '';
-      document.getElementById('moMarketCapChange').innerHTML =
-        `<span style="color:${mcapPct>=0?'var(--green)':'var(--red)'}">` +
-        `${sign}${mcapPct.toFixed(2)}% (24h)</span>`;
-    }
-
-    // Fetch total OI from Bybit
     loadTotalOI();
 
   } catch(e) {
-    document.getElementById('moMarketCap').textContent = '—';
-    document.getElementById('moVolume').textContent    = '—';
-    document.getElementById('moMarkets').textContent   = '—';
+    window._tickerMeta = { mcap: null, vol: null, markets: null, mcapPct: 0 };
   }
 }
 
 async function loadTotalOI() {
+  let oi = null;
   try {
-    // Bybit: sum top perp OIs
     const res  = await fetch(`${BYBIT_API}/tickers?category=linear`);
     const json = await res.json();
-    if (json.retCode !== 0) throw new Error();
-    const list = json.result?.list || [];
-    let totalOI = 0;
-    list.forEach(t => {
-      const oi = parseFloat(t.openInterest) * parseFloat(t.lastPrice);
-      if (!isNaN(oi)) totalOI += oi;
-    });
-    document.getElementById('moOI').textContent = fmt(totalOI);
+    if (json.retCode === 0) {
+      const list = json.result?.list || [];
+      let total = 0;
+      list.forEach(t => {
+        const v = parseFloat(t.openInterest) * parseFloat(t.lastPrice);
+        if (!isNaN(v)) total += v;
+      });
+      oi = total;
+    }
   } catch(e) {
-    // fallback CoinGecko global derivatives OI
     try {
       const res  = await fetch(`${GECKO_API}/derivatives`);
       const list = await res.json();
       let total = 0;
       list.forEach(d => { if (d.open_interest) total += d.open_interest; });
-      document.getElementById('moOI').textContent = total > 0 ? fmt(total) : '—';
-    } catch(e2) {
-      document.getElementById('moOI').textContent = '—';
-    }
+      oi = total > 0 ? total : null;
+    } catch(e2) {}
   }
+  window._tickerOI = oi;
+  tryBuildTicker();
+}
+
+function tryBuildTicker() {
+  // Build ticker only when both meta and top coins are ready
+  const meta  = window._tickerMeta;
+  const coins = window._tickerCoins;
+  const oi    = window._tickerOI ?? null;
+  if (!meta || !coins) return;
+  buildTickerBar(meta.mcap, meta.mcapPct, meta.vol, meta.markets, oi, coins);
 }
 
 // ─────────────────────────────────────────────
