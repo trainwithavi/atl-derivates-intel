@@ -250,6 +250,7 @@ main {
   border: 1px solid var(--border);
   overflow: hidden;
   margin-bottom: 32px;
+  max-width: 100%;
 }
 .tvol-header {
   display: flex;
@@ -388,9 +389,19 @@ main {
   color: var(--muted);
   letter-spacing: 0.04em;
   margin-left: auto;
-  padding: 0 20px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 160px;
+}
+@media (max-width: 640px) {
+  .tvol-tab-note { display: none; }
+  .tvol-tabs { overflow-x: auto; scrollbar-width: none; }
+  .tvol-tabs::-webkit-scrollbar { display: none; }
 }
 
 /* ── NEGATIVE FUNDING TABLE ── */
@@ -435,9 +446,21 @@ main {
   .nfr-col-heads .nfr-oi-col, .nfr-row .nfr-oi { display: none; }
 }
 @media (max-width: 640px) {
-  .nfr-col-heads, .nfr-row { grid-template-columns: 28px 1fr 80px 70px; }
+  /* NFR table: # | PAIR | FUNDING RATE | 24H CHG — fits ~390px */
+  .nfr-col-heads, .nfr-row {
+    grid-template-columns: 22px 1fr 90px 62px;
+    gap: 4px;
+    padding: 9px 10px;
+  }
   .nfr-col-heads .nfr-price-col, .nfr-row .nfr-price,
   .nfr-col-heads .nfr-vol-col,   .nfr-row .nfr-vol { display: none; }
+  /* Tighten funding rate text so it doesn't overflow */
+  .nfr-funding { font-size: 10px; }
+  /* Tighten sym text */
+  .tvol-sym { font-size: 11px; }
+  .tvol-exch { font-size: 8px; }
+  /* Rank column */
+  .tvol-rank { font-size: 9px; }
 }
 
 /* SEARCH BAR */
@@ -1097,16 +1120,18 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   .dash-header, .dash-row { font-size: 10px; }
   .footer-disc { text-align: left; }
   .market-overview { grid-template-columns: 1fr; }
-  /* Top Volume table: rank + pair + volume + change (price hidden) */
+  /* Top Volume table: rank + pair + volume + change (price + OI hidden) */
   .tvol-col-heads, .tvol-row {
-    grid-template-columns: 22px 1fr 85px 60px;
-    gap: 6px;
-    padding: 8px 12px;
+    grid-template-columns: 22px 1fr 82px 60px;
+    gap: 4px;
+    padding: 8px 10px;
   }
   .tvol-col-heads .tvol-price-col,
   .tvol-row .tvol-price,
   .tvol-col-heads .tvol-oi-col,
   .tvol-row .tvol-oi { display: none; }
+  .tvol-volume { font-size: 10px; }
+  .tvol-change { font-size: 10px; }
   .heatmap-grid { grid-template-columns: repeat(5, 1fr); }
   .hm-cell.span2 { grid-column: span 2; }
 }
