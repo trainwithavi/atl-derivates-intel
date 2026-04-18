@@ -1841,10 +1841,6 @@ async function loadTopVolume() {
 
     if (!top.length) throw new Error('no data');
 
-    // ── Store top coins for ticker bar ──
-    window._tickerCoins = top;
-    tryBuildTicker();
-
     noteEl.textContent = activeTab === 'volume'
       ? `${top.length} pairs · Binance + Bybit · deduplicated`
       : `${Math.min(nfrAll.length, 25)} coins · most negative first`;
@@ -1927,7 +1923,7 @@ function scrollToTable(tab) {
 // ─────────────────────────────────────────────
 // TICKER BAR BUILDER
 // ─────────────────────────────────────────────
-function buildTickerBar(mcap, mcapPct, vol24h, markets, oi, topCoins) {
+function buildTickerBar(mcap, mcapPct, vol24h, markets, oi) {
   const inner = document.getElementById('tickerInner');
   if (!inner) return;
 
@@ -1938,28 +1934,24 @@ function buildTickerBar(mcap, mcapPct, vol24h, markets, oi, topCoins) {
     if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
     return '$' + n.toFixed(2);
   }
-  function fmtPx(n) {
-    if (!n || isNaN(n)) return '—';
-    if (n >= 1000) return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
-    if (n >= 1)    return '$' + n.toFixed(4);
-    if (n >= 0.01) return '$' + n.toFixed(5);
-    return '$' + n.toFixed(8);
-  }
 
   const mcapSign  = mcapPct >= 0 ? '+' : '';
   const mcapColor = mcapPct >= 0 ? 'green' : 'red';
 
-  // Build market overview items
-  let html = '';
-
-  // Market overview metrics
+  // Only the 4 global market metrics — no coin list
   const metrics = [
-    { label: 'MKT CAP', val: fmtT(mcap), extra: mcap ? `<span class="ticker-item-chg ${mcapColor}">${mcapSign}${mcapPct?.toFixed(2)}%</span>` : '' },
-    { label: '24H VOL', val: fmtT(vol24h), cls: 'blue' },
-    { label: 'MARKETS', val: markets ? markets.toLocaleString() : '—' },
-    { label: 'FUTURES OI', val: fmtT(oi), cls: 'green' },
+    {
+      label: 'CRYPTO MKT CAP',
+      val:   fmtT(mcap),
+      cls:   mcapColor,
+      extra: mcap ? `<span class="ticker-item-chg ${mcapColor}">${mcapSign}${mcapPct?.toFixed(2)}%</span>` : ''
+    },
+    { label: '24H TRADING VOL', val: fmtT(vol24h), cls: 'blue' },
+    { label: 'TOTAL MARKETS',   val: markets ? markets.toLocaleString() : '—', cls: 'gold' },
+    { label: 'OPEN INTEREST',   val: fmtT(oi),     cls: 'green' },
   ];
 
+  let html = '';
   metrics.forEach(m => {
     html += `
       <div class="ticker-mcap-item">
@@ -1969,32 +1961,13 @@ function buildTickerBar(mcap, mcapPct, vol24h, markets, oi, topCoins) {
       </div>`;
   });
 
-  // Separator
-  html += `<div class="ticker-sep-label"><div class="ticker-sep-dot"></div>TOP VOLUME</div>`;
-
-  // Top coins from exchange
-  topCoins.forEach(c => {
-    const chg    = isNaN(c.change) ? null : c.change;
-    const chgStr = chg !== null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '';
-    const chgCls = chg !== null ? (chg >= 0 ? 'up' : 'down') : '';
-    html += `
-      <div class="ticker-item">
-        <span class="ticker-item-sym">${c.sym}/USDT</span>
-        <span class="ticker-item-val">${fmtPx(c.price)}</span>
-        ${chgStr ? `<span class="ticker-item-chg ${chgCls}">${chgStr}</span>` : ''}
-      </div>`;
-  });
-
   // Duplicate for seamless loop
-  const content = html;
-  inner.innerHTML = content + content;
+  inner.innerHTML = html + html;
 
-  // Adjust animation duration based on content width — longer content = slower scroll
-  // Allow DOM to paint first
   requestAnimationFrame(() => {
-    const totalW = inner.scrollWidth / 2; // half because duplicated
-    const speed  = 80; // px per second
-    const dur    = Math.max(30, totalW / speed);
+    const totalW = inner.scrollWidth / 2;
+    const speed  = 60; // px per second — slower since fewer items
+    const dur    = Math.max(20, totalW / speed);
     inner.style.animationDuration = dur + 's';
   });
 }
@@ -2051,12 +2024,11 @@ async function loadTotalOI() {
 }
 
 function tryBuildTicker() {
-  // Build ticker only when both meta and top coins are ready
-  const meta  = window._tickerMeta;
-  const coins = window._tickerCoins;
-  const oi    = window._tickerOI ?? null;
-  if (!meta || !coins) return;
-  buildTickerBar(meta.mcap, meta.mcapPct, meta.vol, meta.markets, oi, coins);
+  // Build ticker as soon as market meta is ready — no longer waits for coin list
+  const meta = window._tickerMeta;
+  const oi   = window._tickerOI ?? null;
+  if (!meta) return;
+  buildTickerBar(meta.mcap, meta.mcapPct, meta.vol, meta.markets, oi);
 }
 
 // ─────────────────────────────────────────────
