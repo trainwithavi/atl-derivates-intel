@@ -999,6 +999,20 @@ async function loadTopVolume() {
     const merged = [];
     const nfrAll = []; // for negative funding tab
 
+    // ── Build Bybit OI map first (used to patch Binance rows — Binance bulk ticker has no OI field) ──
+    const bybitOIMap = {};
+    let bybitListData = [];
+    if (bybitRes && bybitRes.ok) {
+      const bybitData = await bybitRes.json();
+      bybitListData = bybitData.result?.list || [];
+      bybitListData.forEach(t => {
+        const base  = t.symbol.replace('USDT', '');
+        const price = parseFloat(t.lastPrice);
+        const oiUsd = parseFloat(t.openInterest) * price;
+        if (!isNaN(oiUsd) && oiUsd > 0) bybitOIMap[base] = oiUsd;
+      });
+    }
+
     // ── Binance ──
     if (binRes && binRes.ok) {
       const binList = await binRes.json();
@@ -1011,16 +1025,17 @@ async function loadTopVolume() {
             const base = t.symbol.replace('USDT', '');
             if (!seen.has(base)) {
               seen.add(base);
-              const price  = parseFloat(t.lastPrice);
-              const oi_raw = parseFloat(t.openInterest);
-              const fr     = binFrMap[base] ?? null;
-              const entry  = {
-                sym:     base,
-                exch:    'binance',
+              const price = parseFloat(t.lastPrice);
+              const fr    = binFrMap[base] ?? null;
+              // Binance ticker/24hr bulk has no openInterest field — cross-ref Bybit OI map
+              const oi    = bybitOIMap[base] ?? null;
+              const entry = {
+                sym:    base,
+                exch:   'binance',
                 price,
-                volume:  parseFloat(t.quoteVolume),
-                oi:      !isNaN(oi_raw) ? oi_raw * price : null,
-                change:  parseFloat(t.priceChangePercent),
+                volume: parseFloat(t.quoteVolume),
+                oi,
+                change: parseFloat(t.priceChangePercent),
                 fr,
               };
               merged.push(entry);
@@ -1031,9 +1046,8 @@ async function loadTopVolume() {
     }
 
     // ── Bybit (add only if base not already from Binance) ──
-    if (bybitRes && bybitRes.ok) {
-      const bybitData = await bybitRes.json();
-      const bybitList = bybitData.result?.list || [];
+    if (bybitListData.length) {
+      const bybitList = bybitListData;
       bybitList
         .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.volume24h) > 0)
         .sort((a, b) => {
@@ -1368,20 +1382,64 @@ async function fetchTrend(sym, source) {
 // ─────────────────────────────────────────────
 // SUPPLEMENTARY FDV FETCH (CoinGecko, no key)
 // ─────────────────────────────────────────────
+// Coin ID cache: populated once from /coins/list, reused for all FDV lookups
+let geckoIdCache = null;
+async function getGeckoId(sym) {
+  if (!geckoIdCache) {
+    const r = await fetch(`${GECKO_API}/coins/list`).catch(() => null);
+    if (!r || !r.ok) return null;
+    geckoIdCache = await r.json();
+  }
+  const s = sym.toLowerCase();
+  // Try 1: exact symbol match, prefer id === symbol (canonical coins)
+  const exactId  = geckoIdCache.find(c => c.symbol === s && c.id === s);
+  if (exactId) return exactId.id;
+  // Try 2: symbol match, id starts with symbol (e.g. bitcoin, ethereum)
+  const prefixId = geckoIdCache.find(c => c.symbol === s && c.id.startsWith(s));
+  if (prefixId) return prefixId.id;
+  // Try 3: any symbol match
+  const anyId    = geckoIdCache.find(c => c.symbol === s);
+  if (anyId) return anyId.id;
+  // Try 4: strip leading digits (handles 1000PEPE -> pepe, 1000SHIB -> shib, etc.)
+  const stripped = s.replace(/^\d+/, '');
+  if (stripped && stripped !== s) {
+    const strippedMatch = geckoIdCache.find(c => c.symbol === stripped && c.id === stripped)
+      || geckoIdCache.find(c => c.symbol === stripped && c.id.startsWith(stripped))
+      || geckoIdCache.find(c => c.symbol === stripped);
+    if (strippedMatch) return strippedMatch.id;
+  }
+  return null;
+}
+
+async function fetchFDVById(id) {
+  const r = await fetch(
+    `${GECKO_API}/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
+  ).catch(() => null);
+  if (!r || !r.ok) return null;
+  const d = await r.json();
+  const fdv = d.market_data?.fully_diluted_valuation?.usd ?? null;
+  return typeof fdv === 'number' && fdv > 0 ? fdv : null;
+}
+
 async function fetchFDV(sym) {
   try {
-    const searchRes = await fetch(`${GECKO_API}/search?query=${sym}`).catch(() => null);
-    if (!searchRes || !searchRes.ok) return null;
-    const searchData = await searchRes.json();
-    const coin = searchData.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase());
-    if (!coin) return null;
-    const mktRes = await fetch(
-      `${GECKO_API}/coins/markets?vs_currency=usd&ids=${coin.id}&per_page=1&page=1`
-    ).catch(() => null);
-    if (!mktRes || !mktRes.ok) return null;
-    const list = await mktRes.json();
-    const fdv = list?.[0]?.fully_diluted_valuation ?? null;
-    return typeof fdv === 'number' && fdv > 0 ? fdv : null;
+    const id = await getGeckoId(sym);
+    if (id) {
+      const fdv = await fetchFDVById(id);
+      if (fdv) return fdv;
+    }
+    // Last resort: /search (rate-limited but sometimes works)
+    const sr = await fetch(`${GECKO_API}/search?query=${sym}`).catch(() => null);
+    if (sr && sr.ok) {
+      const sd   = await sr.json();
+      const coin = sd.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase())
+                || sd.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase().replace(/^\d+/, ''));
+      if (coin) {
+        const fdv = await fetchFDVById(coin.id);
+        if (fdv) return fdv;
+      }
+    }
+    return null;
   } catch(e) { return null; }
 }
 
@@ -1473,42 +1531,58 @@ async function fetchGecko(sym) {
 }
 
 // ─────────────────────────────────────────────
-// HISTORICAL OI DELTA (replaces localStorage approach)
+// OI DELTA — session cache (historical endpoints are server-only, CORS blocked)
+// Stores the OI snapshot from 2+ searches ago per symbol and computes real delta
 // ─────────────────────────────────────────────
-async function fetchOIDelta(sym, source) {
-  // Returns { oiTrend: number|null, currentOI: number|null }
+const oiCache = {}; // { SYM: [{ oi, ts }, ...] } — up to 10 entries per symbol
+
+function recordOI(sym, oi) {
+  if (oi === null || isNaN(oi)) return;
+  if (!oiCache[sym]) oiCache[sym] = [];
+  oiCache[sym].push({ oi, ts: Date.now() });
+  if (oiCache[sym].length > 10) oiCache[sym].shift();
+}
+
+async function fetchOIDelta(sym, source, currentOI) {
+  // Returns { oiTrend: number|null }
+  // Strategy: always try Bybit open-interest hist first (CORS-friendly, works for all major pairs)
+  // Binance openInterestHist is permanently CORS-blocked in browsers.
+  // If Bybit hist fails (coin not on Bybit), fall back to session OI cache.
+  if (source === 'CoinGecko (Spot)') return { oiTrend: null };
+
   try {
-    if (source === 'Binance Futures') {
-      const res = await fetch(
-        `${BINANCE_FAPI}/openInterestHist?symbol=${sym}USDT&period=1h&limit=25`
-      ).catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length >= 2) {
-          const older   = parseFloat(data[0].sumOpenInterest);
-          const newer   = parseFloat(data[data.length - 1].sumOpenInterest);
-          const oiTrend = ((newer - older) / older) * 100;
-          return { oiTrend, currentOI: null };
-        }
-      }
-    } else if (source === 'Bybit Linear') {
-      const res = await fetch(
-        `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`
-      ).catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json();
+    const res = await fetch(
+      `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`
+    ).catch(() => null);
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data.retCode === 0) {
         const list = data.result?.list || [];
         if (list.length >= 2) {
-          // Bybit returns newest first — list[0] = newest, list[last] = oldest
           const newer   = parseFloat(list[0].openInterest);
           const older   = parseFloat(list[list.length - 1].openInterest);
-          const oiTrend = ((newer - older) / older) * 100;
-          return { oiTrend, currentOI: null };
+          if (!isNaN(newer) && !isNaN(older) && older > 0) {
+            const oiTrend = ((newer - older) / older) * 100;
+            return { oiTrend };
+          }
         }
       }
     }
   } catch(e) {}
-  return { oiTrend: null, currentOI: null };
+
+  // Bybit hist failed — fall back to session cache
+  if (currentOI === null || isNaN(currentOI)) return { oiTrend: null };
+  const history = oiCache[sym] || [];
+  if (history.length === 0) {
+    recordOI(sym, currentOI);
+    return { oiTrend: null };
+  }
+  const oldest  = history[0];
+  const ageMins = (Date.now() - oldest.ts) / 60000;
+  const oiTrend = ((currentOI - oldest.oi) / oldest.oi) * 100;
+  recordOI(sym, currentOI);
+  if (ageMins < 5 && history.length < 2) return { oiTrend: null };
+  return { oiTrend };
 }
 
 // ─────────────────────────────────────────────
@@ -1687,10 +1761,10 @@ function buildDashboard(data, bias, trendObj, oiTrend) {
 
   let oiStatus = '—', oiClass = 'neutral', oiReading = 'Historical delta unavailable';
   if (oiTrend !== null) {
-    if (oiTrend > 1 && change24h > 0)       { oiStatus = 'LONG BUILDUP';  oiClass = 'bull'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h) · Price +${change24h.toFixed(2)}%`; }
-    else if (oiTrend > 1 && change24h < 0)  { oiStatus = 'SHORT BUILDUP'; oiClass = 'bear'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h) · Price ${change24h.toFixed(2)}%`; }
-    else if (oiTrend < -1 && change24h > 0) { oiStatus = 'SHORT COVER';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h) · Weak rally`; }
-    else if (oiTrend < -1 && change24h < 0) { oiStatus = 'LONG UNWIND';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h) · Sellers exiting`; }
+    if (oiTrend > 1 && change24h > 0)       { oiStatus = 'LONG BUILDUP';  oiClass = 'bull'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h Δ) · Price +${change24h.toFixed(2)}%`; }
+    else if (oiTrend > 1 && change24h < 0)  { oiStatus = 'SHORT BUILDUP'; oiClass = 'bear'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h Δ) · Price ${change24h.toFixed(2)}%`; }
+    else if (oiTrend < -1 && change24h > 0) { oiStatus = 'SHORT COVER';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h Δ) · Weak rally`; }
+    else if (oiTrend < -1 && change24h < 0) { oiStatus = 'LONG UNWIND';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h Δ) · Sellers exiting`; }
     else { oiStatus = 'STABLE'; oiClass = 'neutral'; oiReading = `OI Δ${oiTrend.toFixed(1)}% (24h)`; }
   } else if (!isFutures) { oiReading = 'Spot data — not available'; }
 
@@ -1741,7 +1815,7 @@ async function renderResult(data) {
   lastData = data;
 
   // ── Fetch OI delta from historical endpoint (stateless, works on first search) ──
-  const { oiTrend } = await fetchOIDelta(data.symbol, data.source);
+  const { oiTrend } = await fetchOIDelta(data.symbol, data.source, data.openInterest);
 
   const bias = computeBias(data, oiTrend);
 
