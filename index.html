@@ -943,6 +943,50 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .hm-neutral .hm-score,
 .hm-neutral .hm-sig  { color: var(--muted); }
 
+/* Firing Now — amber/orange, move in progress */
+.hm-firing-now { background: rgba(255,152,0,0.45); }
+.hm-firing-now .hm-sym,
+.hm-firing-now .hm-score,
+.hm-firing-now .hm-sig { color: #3d1f00; }
+
+/* Post-Move — greyed out, squeeze done */
+.hm-post-move { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08) !important; }
+.hm-post-move .hm-sym  { color: var(--muted); }
+.hm-post-move .hm-score,
+.hm-post-move .hm-sig  { color: #3a3f45; }
+
+/* Confidence bar at bottom of each cell */
+.hm-conf-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 3px;
+  border-radius: 0 0 2px 2px;
+  transition: width 0.3s ease;
+  opacity: 0.75;
+}
+.hm-squeeze-bull .hm-conf-bar,
+.hm-squeeze-bull-mid .hm-conf-bar,
+.hm-squeeze-bull-low .hm-conf-bar { background: var(--green); }
+.hm-squeeze-bear .hm-conf-bar,
+.hm-squeeze-bear-mid .hm-conf-bar,
+.hm-squeeze-bear-low .hm-conf-bar { background: var(--red); }
+.hm-oi-build .hm-conf-bar  { background: var(--blue); }
+.hm-oi-unwind .hm-conf-bar { background: #ce93d8; }
+.hm-watch .hm-conf-bar     { background: var(--gold); }
+.hm-firing-now .hm-conf-bar { background: var(--orange); }
+.hm-post-move .hm-conf-bar  { background: var(--muted); }
+.hm-neutral .hm-conf-bar    { background: rgba(255,255,255,0.15); }
+
+/* Score badge */
+.hm-score-badge {
+  font-family: 'Syne', sans-serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
 /* Empty / pre-scan state */
 .hm-empty {
   grid-column: span 5;
@@ -1109,7 +1153,7 @@ footer {
       </div>
 
       <!-- Stats strip — clickable filters -->
-      <div class="hm-stats">
+      <div class="hm-stats" style="grid-template-columns:repeat(5,1fr);">
         <div class="hm-stat hm-stat-active" id="hmStat-all" onclick="setHmFilter('all')" title="Show all pairs">
           <div class="hm-stat-label">Scanned</div>
           <div class="hm-stat-val" id="hmStatPairs">—</div>
@@ -1125,6 +1169,10 @@ footer {
         <div class="hm-stat" id="hmStat-alert" onclick="setHmFilter('alert')" title="High alert — score 70+">
           <div class="hm-stat-label">Alert 70+</div>
           <div class="hm-stat-val gold" id="hmStatHigh">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-done" onclick="setHmFilter('done')" title="Already moved — post-squeeze or firing now">
+          <div class="hm-stat-label">Done/Live</div>
+          <div class="hm-stat-val" style="color:var(--muted);" id="hmStatDone">—</div>
         </div>
       </div>
 
@@ -1145,8 +1193,11 @@ footer {
         <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,68,68,0.55)"></div>▼ DUMP — longs overcrowded, flush risk</div>
         <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(64,196,255,0.28)"></div>▲ BUILDING — OI accumulating, bullish</div>
         <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(206,147,216,0.22)"></div>▼ UNWIND — positions closing, bearish</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,152,0,0.45)"></div>⚡ FIRING — move in progress, closing window</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)"></div>✓ DONE — post-move, do not chase</div>
         <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,213,79,0.18)"></div>◈ WATCH — conditions forming</div>
       </div>
+      <div class="hm-click-hint" id="hmScanTime" style="color:var(--muted);padding-bottom:8px;"></div>
 
     </div><!-- end heatmap-panel -->
 
@@ -2322,16 +2373,19 @@ document.getElementById('tickerInput').addEventListener('keydown', e => {
 });
 
 // ═════════════════════════════════════════════
-// PRE-MOVE SCANNER ENGINE (heatmap panel)
+// PRE-MOVE SCANNER ENGINE v8 (heatmap panel)
 // ═════════════════════════════════════════════
 let hmResults = [];
+let hmLastScanTime = null;
+let hmRescanCooldownTimer = null;
 
-// ── Score engine (identical to standalone scanner) ──
+// ── Score engine v8 ──
 function pmComputeScore(coin) {
-  const { fr, oiDelta, change24h, volume } = coin;
+  const { fr, oiDelta, oiVelocity, change24h, change4h, change1h, volume } = coin;
   let bullScore = 0, bearScore = 0;
   const breakdown = { bull: {}, bear: {} };
 
+  // ── Fix #9: Funding Rate scoring (unchanged thresholds, same as v7) ──
   if (fr !== null) {
     if      (fr <= -0.05) { bullScore += 35; breakdown.bull.funding = 35; }
     else if (fr <= -0.02) { bullScore += 22; breakdown.bull.funding = 22; }
@@ -2343,24 +2397,45 @@ function pmComputeScore(coin) {
     else                  { breakdown.bear.funding = 0; }
   }
 
+  // ── Fix #4 & #5: OI delta with velocity modifier ──
   if (oiDelta !== null) {
-    if      (oiDelta > 15)  { bullScore += 30; bearScore += 20; breakdown.bull.oi = 30; breakdown.bear.oi = 20; }
-    else if (oiDelta > 8)   { bullScore += 22; bearScore += 16; breakdown.bull.oi = 22; breakdown.bear.oi = 16; }
-    else if (oiDelta > 3)   { bullScore += 14; bearScore += 10; breakdown.bull.oi = 14; breakdown.bear.oi = 10; }
-    else if (oiDelta > 1)   { bullScore +=  8; bearScore +=  6; breakdown.bull.oi = 8;  breakdown.bear.oi = 6; }
-    else if (oiDelta < -10) { bearScore += 18; breakdown.bear.oi = 18; breakdown.bull.oi = 0; }
-    else                    { breakdown.bull.oi = 0; breakdown.bear.oi = 0; }
+    let oiBull = 0, oiBear = 0;
+    if      (oiDelta > 15)  { oiBull = 30; oiBear = 20; }
+    else if (oiDelta > 8)   { oiBull = 22; oiBear = 16; }
+    else if (oiDelta > 5)   { oiBull = 14; oiBear = 10; } // Fix #14: raised from >3 to >5
+    else if (oiDelta > 1)   { oiBull =  8; oiBear =  6; }
+    else if (oiDelta < -10) { oiBear = 18; }
+
+    // Fix #4: OI acceleration bonus
+    if (oiVelocity !== null && oiVelocity > 2) {
+      oiBull = Math.min(oiBull + 10, 40);
+      oiBear = Math.min(oiBear + 10, 30);
+    }
+    // Fix #5: OI deceleration penalty
+    if (oiVelocity !== null && oiVelocity < -3) {
+      oiBull = Math.max(oiBull - 15, 0);
+      oiBear = Math.max(oiBear - 15, 0);
+    }
+
+    bullScore += oiBull; bearScore += oiBear;
+    breakdown.bull.oi = oiBull; breakdown.bear.oi = oiBear;
   }
 
+  // ── Fix #9: Price change scoring — extended penalty for already-moved coins ──
   if (change24h !== null) {
+    // Bull price scoring
     if      (change24h >= -3  && change24h <= 5)  { bullScore += 20; breakdown.bull.price = 20; }
     else if (change24h >= -8  && change24h <= 12) { bullScore += 10; breakdown.bull.price = 10; }
-    else                                           { breakdown.bull.price = 0; }
+    else if (change24h > 12)  { bullScore -= 10; breakdown.bull.price = -10; } // penalty: already pumped
+    else                      { breakdown.bull.price = 0; }
+    // Bear price scoring
     if      (change24h >= -5  && change24h <= 3)  { bearScore += 20; breakdown.bear.price = 20; }
     else if (change24h >= -12 && change24h <= 8)  { bearScore += 10; breakdown.bear.price = 10; }
-    else                                           { breakdown.bear.price = 0; }
+    else if (change24h < -12) { bearScore -= 10; breakdown.bear.price = -10; } // penalty: already dumped
+    else                      { breakdown.bear.price = 0; }
   }
 
+  // ── Fix #11: Volume scoring (unchanged thresholds) ──
   if (volume !== null) {
     if      (volume > 100e6) { bullScore += 15; bearScore += 15; breakdown.bull.vol = 15; breakdown.bear.vol = 15; }
     else if (volume > 30e6)  { bullScore += 10; bearScore += 10; breakdown.bull.vol = 10; breakdown.bear.vol = 10; }
@@ -2368,41 +2443,146 @@ function pmComputeScore(coin) {
     else                     { breakdown.bull.vol = 0; breakdown.bear.vol = 0; }
   }
 
-  const direction = bullScore >= bearScore ? 'bull' : 'bear';
-  const score     = Math.min(100, direction === 'bull' ? bullScore : bearScore);
+  // ── Fix #10: FR + OI coherence check ──
+  // Extreme negative FR (squeeze-bull setup) but OI dropping = shorts already liquidated
+  if (fr !== null && fr <= -0.05 && oiDelta !== null && oiDelta < 0) {
+    bullScore = Math.max(bullScore - 10, 0);
+  }
+  // Extreme positive FR (squeeze-bear setup) but OI dropping = longs already liquidated
+  if (fr !== null && fr >= 0.05 && oiDelta !== null && oiDelta < 0) {
+    bearScore = Math.max(bearScore - 10, 0);
+  }
 
+  const direction = bullScore >= bearScore ? 'bull' : 'bear';
+  const rawScore  = direction === 'bull' ? bullScore : bearScore;
+  const score     = Math.min(100, Math.max(0, rawScore));
+
+  // ── Determine base signal ──
   let signal = 'neutral';
+
+  // ── Fix #1, #2, #3, #7, #8: Hard disqualifier gates ──
+  // Gate 1: 4h move already fired
+  const abs4h = change4h !== null ? Math.abs(change4h) : 0;
+  if (abs4h > 15) {
+    // Fix #12/#13: classify as firing-now or post-move rather than hard-excluding
+    // so they appear in the DONE tab
+    if (change4h > 0 && direction === 'bull') signal = 'firing-now';
+    else if (change4h < 0 && direction === 'bear') signal = 'firing-now';
+    else signal = 'post-move';
+    return { score, direction, signal, breakdown: breakdown[direction] };
+  }
+
+  // Gate 2: Post-squeeze — FR normalised but big 24h move
+  const absFr = fr !== null ? Math.abs(fr) : 999;
+  const abs24h = change24h !== null ? Math.abs(change24h) : 0;
+  if (absFr < 0.01 && abs24h > 10) {
+    signal = 'post-move';
+    return { score, direction, signal, breakdown: breakdown[direction] };
+  }
+
+  // Gate 3: In-progress squeeze — 1h candle already surging with OI dropping
+  const abs1h = change1h !== null ? Math.abs(change1h) : 0;
+  if (abs1h > 8 && oiDelta !== null && oiDelta < 0) {
+    signal = 'firing-now';
+    return { score, direction, signal, breakdown: breakdown[direction] };
+  }
+
+  // Gate 4: Fix #8 — 4h vs 24h divergence (4h accounts for >70% of 24h move)
+  if (change4h !== null && change24h !== null && Math.abs(change24h) > 5) {
+    const ratio = Math.abs(change4h) / Math.abs(change24h);
+    if (ratio > 0.70) {
+      // Most of the move happened recently — late entry risk, downgrade
+      signal = 'watch';
+      return { score: Math.max(score - 15, 0), direction, signal, breakdown: breakdown[direction] };
+    }
+  }
+
+  // ── Normal signal classification ──
   if (direction === 'bull') {
-    if      (fr !== null && fr <= -0.05 && oiDelta !== null && oiDelta > 3) signal = 'squeeze-bull';
-    else if (oiDelta !== null && oiDelta > 8)                                signal = 'oi-build';
-    else if (score >= 45)                                                    signal = 'watch';
+    // Fix #14: squeeze-bull now requires OI delta > 5% (raised from 3%) AND velocity not decelerating
+    if (fr !== null && fr <= -0.05 && oiDelta !== null && oiDelta > 5 && (oiVelocity === null || oiVelocity >= 0)) {
+      signal = 'squeeze-bull';
+    }
+    // Fix #6: oi-build requires OI still accelerating (velocity >= 0)
+    else if (oiDelta !== null && oiDelta > 8 && (oiVelocity === null || oiVelocity >= -1)) {
+      signal = 'oi-build';
+    }
+    else if (score >= 45) signal = 'watch';
   } else {
-    if      (fr !== null && fr >= 0.05 && oiDelta !== null && oiDelta > 3)  signal = 'squeeze-bear';
-    else if (oiDelta !== null && oiDelta < -10)                              signal = 'oi-unwind';
-    else if (score >= 45)                                                    signal = 'watch';
+    // Fix #14: squeeze-bear same tightening
+    if (fr !== null && fr >= 0.05 && oiDelta !== null && oiDelta > 5 && (oiVelocity === null || oiVelocity >= 0)) {
+      signal = 'squeeze-bear';
+    }
+    else if (oiDelta !== null && oiDelta < -10) signal = 'oi-unwind';
+    else if (score >= 45) signal = 'watch';
   }
 
   return { score, direction, signal, breakdown: breakdown[direction] };
 }
 
-// ── OI delta fetch — Bybit historical (25h) ──
-async function pmFetchOIDelta(sym) {
+// ── OI delta + velocity + kline fetch per coin ──
+async function pmFetchCoinData(sym) {
+  let oiDelta = null, oiVelocity = null, change4h = null, change1h = null;
+
   try {
-    const r = await fetch(`${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`).catch(() => null);
-    if (!r || !r.ok) return null;
-    const d = await r.json();
-    if (d.retCode !== 0) return null;
-    const list = d.result?.list || [];
-    if (list.length < 2) return null;
-    const newer = parseFloat(list[0].openInterest);
-    const older = parseFloat(list[list.length - 1].openInterest);
-    if (!isNaN(newer) && !isNaN(older) && older > 0) return ((newer - older) / older) * 100;
+    // OI history: 25 × 1h snapshots
+    const oiRes = await fetch(
+      `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`
+    ).catch(() => null);
+
+    if (oiRes && oiRes.ok) {
+      const d    = await oiRes.json();
+      const list = d.result?.list || [];
+      if (list.length >= 4) {
+        const vals   = list.map(x => parseFloat(x.openInterest)).reverse(); // oldest first
+        const newest = vals[vals.length - 1];
+        const oldest = vals[0];
+        if (!isNaN(newest) && !isNaN(oldest) && oldest > 0) {
+          oiDelta = ((newest - oldest) / oldest) * 100;
+
+          // Fix #4 & #5: OI velocity — split 25h window into two halves
+          const mid      = vals[Math.floor(vals.length / 2)];
+          const olderRef = vals[0];
+          const olderDelta = olderRef > 0 ? ((mid - olderRef) / olderRef) * 100 : null;
+          const newerDelta = mid > 0      ? ((newest - mid) / mid) * 100         : null;
+          if (olderDelta !== null && newerDelta !== null) {
+            oiVelocity = newerDelta - olderDelta; // positive = accelerating
+          }
+        }
+      }
+    }
   } catch(e) {}
-  return null;
+
+  try {
+    // Fix #1, #3, #7, #8: 1h klines — 5 candles gives us 4h + 1h changes
+    const klRes = await fetch(
+      `${BYBIT_API}/kline?category=linear&symbol=${sym}USDT&interval=60&limit=5`
+    ).catch(() => null);
+
+    if (klRes && klRes.ok) {
+      const kd   = await klRes.json();
+      const kl   = (kd.result?.list || []).reverse(); // oldest first
+      if (kl.length >= 2) {
+        // 1h change: last candle open → close
+        const last  = kl[kl.length - 1];
+        const lOpen = parseFloat(last[1]), lClose = parseFloat(last[4]);
+        if (!isNaN(lOpen) && lOpen > 0) change1h = ((lClose - lOpen) / lOpen) * 100;
+
+        // 4h change: 4 candles ago open → last close
+        const base4h = kl.length >= 5 ? kl[kl.length - 5] : kl[0];
+        const bOpen  = parseFloat(base4h[1]);
+        if (!isNaN(bOpen) && bOpen > 0) change4h = ((lClose - bOpen) / bOpen) * 100;
+      }
+    }
+  } catch(e) {}
+
+  return { oiDelta, oiVelocity, change4h, change1h };
 }
 
-// ── Cell class based on signal + score ──
+// ── Cell CSS class based on signal + score ──
 function hmCellClass(signal, score, direction) {
+  if (signal === 'firing-now') return 'hm-firing-now';
+  if (signal === 'post-move')  return 'hm-post-move';
   if (signal === 'squeeze-bull') {
     if (score >= 70) return 'hm-squeeze-bull';
     if (score >= 55) return 'hm-squeeze-bull-mid';
@@ -2423,17 +2603,18 @@ const HM_SIG_SHORT = {
   'squeeze-bear': '▼ DUMP',
   'oi-build':     '▲ BUILDING',
   'oi-unwind':    '▼ UNWIND',
+  'firing-now':   '⚡ FIRING',
+  'post-move':    '✓ DONE',
   'watch':        '◈ WATCH',
   'neutral':      '',
 };
 
 // ── Active heatmap filter ──
-let hmActiveFilter = 'all'; // 'all' | 'bull' | 'bear' | 'alert'
+let hmActiveFilter = 'all';
 
 function setHmFilter(f) {
   hmActiveFilter = f;
-  // Update stat cell active states
-  ['all','bull','bear','alert'].forEach(key => {
+  ['all','bull','bear','alert','done'].forEach(key => {
     const el = document.getElementById('hmStat-' + key);
     if (el) el.classList.toggle('hm-stat-active', key === f);
   });
@@ -2446,18 +2627,20 @@ function renderHeatmap() {
   if (!grid) return;
   if (!hmResults.length) return;
 
-  // Apply filter
   let filtered = [...hmResults];
-  if (hmActiveFilter === 'bull')  filtered = filtered.filter(r => r.direction === 'bull' && r.score >= 55);
-  if (hmActiveFilter === 'bear')  filtered = filtered.filter(r => r.direction === 'bear' && r.score >= 55);
-  if (hmActiveFilter === 'alert') filtered = filtered.filter(r => r.score >= 70);
+
+  if (hmActiveFilter === 'bull')  filtered = filtered.filter(r => r.direction === 'bull' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move');
+  if (hmActiveFilter === 'bear')  filtered = filtered.filter(r => r.direction === 'bear' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move');
+  if (hmActiveFilter === 'alert') filtered = filtered.filter(r => r.score >= 70 && r.signal !== 'firing-now' && r.signal !== 'post-move');
+  if (hmActiveFilter === 'done')  filtered = filtered.filter(r => r.signal === 'firing-now' || r.signal === 'post-move');
+  // 'all' excludes post-move/firing by default — they live in DONE tab
+  if (hmActiveFilter === 'all')   filtered = filtered.filter(r => r.signal !== 'firing-now' && r.signal !== 'post-move');
 
   if (!filtered.length) {
     grid.innerHTML = `<div class="hm-empty">No results for this filter.</div>`;
     return;
   }
 
-  // Top 30 by score; top 2 get span2
   const coins = filtered.slice(0, 30);
 
   grid.innerHTML = coins.map((c, i) => {
@@ -2467,11 +2650,20 @@ function renderHeatmap() {
     const chgStr   = c.change !== null && !isNaN(c.change)
       ? (c.change >= 0 ? '+' : '') + c.change.toFixed(1) + '%'
       : '';
-    const tooltip  = `${c.sym}/USDT · ${c.signal.replace(/-/g,' ').toUpperCase()} · FR: ${c.fr !== null ? c.fr.toFixed(4)+'%' : 'n/a'} · 24h: ${chgStr}`;
+    const ch4hStr  = c.change4h !== null && !isNaN(c.change4h)
+      ? ` · 4h: ${c.change4h >= 0 ? '+' : ''}${c.change4h.toFixed(1)}%`
+      : '';
+    const velStr   = c.oiVelocity !== null
+      ? ` · OI vel: ${c.oiVelocity >= 0 ? '↑' : '↓'}${Math.abs(c.oiVelocity).toFixed(1)}%`
+      : '';
+    const tooltip  = `${c.sym}/USDT · ${(c.signal||'').replace(/-/g,' ').toUpperCase()} · FR: ${c.fr !== null ? c.fr.toFixed(4)+'%' : 'n/a'} · 24h: ${chgStr}${ch4hStr}${velStr} · Score: ${c.score}`;
+    const confPct  = Math.max(5, Math.min(100, c.score));
     return `
       <div class="hm-cell ${cls}${spanCls}" title="${tooltip}" onclick="hmClick('${c.sym}')">
         <div class="hm-sym">${c.sym}</div>
         ${sigShort ? `<div class="hm-sig">${sigShort}</div>` : ''}
+        <div class="hm-score-badge">${c.score}</div>
+        <div class="hm-conf-bar" style="width:${confPct}%"></div>
       </div>`;
   }).join('');
 }
@@ -2483,7 +2675,6 @@ function hmClick(sym) {
   input.style.color = 'var(--green)';
   setTimeout(() => { input.style.color = ''; }, 500);
   fetchData();
-  // Scroll to result after data renders — delay accounts for async fetch
   setTimeout(() => {
     const rs = document.getElementById('resultSection');
     if (rs && rs.style.display !== 'none') {
@@ -2492,10 +2683,13 @@ function hmClick(sym) {
   }, 3500);
 }
 
-// ── Main scan — runs full Pre-Move Scanner engine ──
+// ── Main scan — v8 with all fixes ──
 async function runHeatmapScan() {
+  // Fix #22: Rescan cooldown — prevent API hammering
   const btn     = document.getElementById('hmScanBtn');
   const btnText = document.getElementById('hmScanBtnText');
+  if (btn.disabled) return;
+
   const progWrap = document.getElementById('hmProgressWrap');
   const progBar  = document.getElementById('hmProgBar');
   const progText = document.getElementById('hmProgText');
@@ -2578,31 +2772,34 @@ async function runHeatmapScan() {
 
     // Filter: min $3M volume
     const viable = allCoins.filter(c => !isNaN(c.volume) && c.volume > 3e6);
-    setHmProgress(15, `Got ${viable.length} pairs — fetching OI history...`);
+    setHmProgress(15, `Got ${viable.length} pairs — fetching OI + momentum data...`);
 
-    // Step 2 — OI delta per coin, batched 12 at a time
+    // Fix #20: Step 2 — OI delta/velocity + kline fetch per coin, batched 12 at a time
     const BATCH = 12;
     let done = 0;
-    const withOI = [];
+    const withData = [];
 
     for (let i = 0; i < viable.length; i += BATCH) {
       const batch   = viable.slice(i, i + BATCH);
       const results = await Promise.all(batch.map(async c => {
-        const oiDelta = await pmFetchOIDelta(c.sym);
-        return { ...c, oiDelta };
+        const { oiDelta, oiVelocity, change4h, change1h } = await pmFetchCoinData(c.sym);
+        return { ...c, oiDelta, oiVelocity, change4h, change1h };
       }));
-      results.forEach(r => withOI.push(r));
+      results.forEach(r => withData.push(r));
       done += batch.length;
+      // Fix #21: updated progress label
       const pct = 15 + Math.round((done / viable.length) * 75);
-      setHmProgress(pct, `OI history: ${done}/${viable.length} pairs...`);
+      setHmProgress(pct, `OI + momentum: ${done}/${viable.length} pairs...`);
     }
 
     setHmProgress(97, 'Scoring all pairs...');
 
     // Step 3 — score every coin
-    hmResults = withOI.map(c => {
+    hmResults = withData.map(c => {
       const { score, direction, signal, breakdown } = pmComputeScore({
-        fr: c.fr, oiDelta: c.oiDelta, change24h: c.change, volume: c.volume,
+        fr: c.fr, oiDelta: c.oiDelta, oiVelocity: c.oiVelocity,
+        change24h: c.change, change4h: c.change4h, change1h: c.change1h,
+        volume: c.volume,
       });
       return { ...c, score, direction, signal, breakdown };
     }).sort((a, b) => b.score - a.score);
@@ -2610,13 +2807,22 @@ async function runHeatmapScan() {
     setHmProgress(100, `Done — ${hmResults.length} pairs scored`);
 
     // Update stats
-    const highAlert = hmResults.filter(r => r.score >= 70).length;
-    const bullCount = hmResults.filter(r => r.direction === 'bull' && r.score >= 55).length;
-    const bearCount = hmResults.filter(r => r.direction === 'bear' && r.score >= 55).length;
+    const highAlert  = hmResults.filter(r => r.score >= 70 && r.signal !== 'firing-now' && r.signal !== 'post-move').length;
+    const bullCount  = hmResults.filter(r => r.direction === 'bull' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move').length;
+    const bearCount  = hmResults.filter(r => r.direction === 'bear' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move').length;
+    const doneCount  = hmResults.filter(r => r.signal === 'firing-now' || r.signal === 'post-move').length;
+
     document.getElementById('hmStatPairs').textContent = hmResults.length;
     document.getElementById('hmStatBull').textContent  = bullCount;
     document.getElementById('hmStatBear').textContent  = bearCount;
     document.getElementById('hmStatHigh').textContent  = highAlert;
+    document.getElementById('hmStatDone').textContent  = doneCount;
+
+    // Fix #18: Scan timestamp
+    hmLastScanTime = new Date();
+    const timeStr = hmLastScanTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const el = document.getElementById('hmScanTime');
+    if (el) el.textContent = `Last scan: ${timeStr} · ${hmResults.length} pairs scored`;
 
     renderHeatmap();
 
@@ -2625,8 +2831,20 @@ async function runHeatmapScan() {
   }
 
   progWrap.style.display = 'none';
-  btn.disabled = false;
-  btnText.textContent = 'RESCAN';
+
+  // Fix #22: 90-second rescan cooldown
+  let cooldown = 90;
+  btnText.textContent = `RESCAN (${cooldown}s)`;
+  hmRescanCooldownTimer = setInterval(() => {
+    cooldown--;
+    if (cooldown <= 0) {
+      clearInterval(hmRescanCooldownTimer);
+      btn.disabled = false;
+      btnText.textContent = 'RESCAN';
+    } else {
+      btnText.textContent = `RESCAN (${cooldown}s)`;
+    }
+  }, 1000);
 }
 
 // ─────────────────────────────────────────────
