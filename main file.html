@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATL · Derivatives Intel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080b0f;
+  --bg2: #0d1117;
+  --bg3: #111820;
+  --border: rgba(255,255,255,0.07);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.12);
+  --red: #ff4444;
+  --red-dim: rgba(255,68,68,0.12);
+  --gold: #ffd54f;
+  --gold-dim: rgba(255,213,79,0.12);
+  --blue: #40c4ff;
+  --blue-dim: rgba(64,196,255,0.10);
+  --orange: #ff9800;
+  --orange-dim: rgba(255,152,0,0.12);
+  --text: #e8edf2;
+  --muted: #5a6470;
+  --sub: #8892a0;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 400;
+  min-height: 100vh;
+  /* overflow-x removed — was blocking horizontal scroll on mobile ticker bar */
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.015) 3px, rgba(255,255,255,0.015) 4px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(8,11,15,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+.nav-logo span { color: var(--green); }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.nav-nexus-btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--green);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+.nav-nexus-btn:hover { opacity: 0.88; box-shadow: 0 0 14px rgba(0,230,118,0.35); }
+.nav-nexus-btn::before { content: '⚡'; font-size: 11px; }
+.nav-badge {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.3);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+.nav-refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* ── Mobile nav adjustments ── */
+@media (max-width: 640px) {
+  nav { padding: 0 14px; gap: 8px; }
+  .nav-logo { font-size: 13px; }
+  .nav-badge { display: none; }
+  .nav-refresh { display: none; }
+  .nav-nexus-btn {
+    font-size: 9px;
+    padding: 5px 10px;
+    gap: 4px;
+    letter-spacing: 0.08em;
+  }
+  .nav-nexus-btn::before { font-size: 9px; }
+}
+.refresh-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.refresh-dot.live { background: var(--green); animation: pulse 2s infinite; }
+
+/* MAIN */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 100px 32px 80px;
+}
+
+/* HERO */
+.hero-tag {
+  display: inline-block;
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.25);
+  background: var(--green-dim);
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 5vw, 58px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+.hero-title .accent { color: var(--green); }
+.hero-title .dim { color: var(--muted); font-weight: 400; }
+.hero-sub {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--sub);
+  max-width: 560px;
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+/* ── MARKET OVERVIEW PANEL ── */
+.market-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+.mo-cell {
+  background: var(--bg2);
+  padding: 20px 24px;
+  transition: background 0.15s;
+}
+.mo-cell:hover { background: var(--bg3); }
+.mo-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.mo-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.mo-value.green { color: var(--green); }
+.mo-value.blue { color: var(--blue); }
+.mo-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+/* ── TOP VOLUME PANEL ── */
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, rgba(255,255,255,0.03) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 3px;
+  height: 12px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── TOP VOLUME TABLE ── */
+.tvol-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 32px;
+  max-width: 100%;
+}
+.tvol-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.tvol-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tvol-note {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.tvol-col-heads {
+  display: grid;
+  grid-template-columns: 28px 1fr 90px 110px 90px 70px;
+  padding: 8px 20px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.015);
+  gap: 10px;
+  align-items: center;
+}
+.tvol-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 90px 110px 90px 70px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 10px;
+  transition: background 0.1s;
+}
+.tvol-row:last-child { border-bottom: none; }
+.tvol-row:hover { background: var(--bg3); }
+.tvol-rank {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 300;
+  text-align: center;
+}
+.tvol-sym-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tvol-sym {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tvol-exch {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tvol-exch.binance { color: #f0b90b; }
+.tvol-exch.bybit   { color: #f7a600; }
+.tvol-price {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-volume {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue);
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-oi {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--sub);
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-change {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+.tvol-change.up   { color: var(--green); }
+.tvol-change.down { color: var(--red); }
+.tvol-list-body { min-height: 120px; }
+
+/* ── TABS ── */
+.tvol-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.tvol-tab {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 11px 20px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.tvol-tab:hover { color: var(--text); }
+.tvol-tab.active { color: var(--green); border-bottom-color: var(--green); }
+.tvol-tab-note {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-left: auto;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 160px;
+}
+@media (max-width: 640px) {
+  .tvol-tab-note { display: none; }
+  .tvol-tabs { overflow-x: auto; scrollbar-width: none; }
+  .tvol-tabs::-webkit-scrollbar { display: none; }
+}
+
+/* ── NEGATIVE FUNDING TABLE ── */
+.nfr-col-heads {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 90px 100px 80px 70px;
+  padding: 8px 20px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.015);
+  gap: 8px;
+  align-items: center;
+}
+.nfr-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 90px 100px 80px 70px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.nfr-row:last-child { border-bottom: none; }
+.nfr-row:hover { background: var(--bg3); }
+.nfr-funding {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+.nfr-funding.mild    { color: #64ffda; }
+.nfr-funding.mod     { color: #00e676; }
+.nfr-funding.extreme { color: #69ff47; }
+
+@media (max-width: 900px) {
+  .nfr-col-heads, .nfr-row { grid-template-columns: 28px 1fr 80px 90px 80px 70px; }
+  .nfr-col-heads .nfr-oi-col, .nfr-row .nfr-oi { display: none; }
+}
+@media (max-width: 640px) {
+  /* NFR table: # | PAIR | FUNDING RATE | 24H CHG — fits ~390px */
+  .nfr-col-heads, .nfr-row {
+    grid-template-columns: 22px 1fr 90px 62px;
+    gap: 4px;
+    padding: 9px 10px;
+  }
+  .nfr-col-heads .nfr-price-col, .nfr-row .nfr-price,
+  .nfr-col-heads .nfr-vol-col,   .nfr-row .nfr-vol { display: none; }
+  /* Tighten funding rate text so it doesn't overflow */
+  .nfr-funding { font-size: 10px; }
+  /* Tighten sym text */
+  .tvol-sym { font-size: 11px; }
+  .tvol-exch { font-size: 8px; }
+  /* Rank column */
+  .tvol-rank { font-size: 9px; }
+}
+
+/* SEARCH BAR */
+.search-wrap {
+  display: flex;
+  gap: 0;
+  max-width: 560px;
+  border: 1px solid rgba(0,230,118,0.25);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg2);
+  transition: border-color 0.2s;
+}
+.search-wrap:focus-within {
+  border-color: rgba(0,230,118,0.6);
+  box-shadow: 0 0 0 3px rgba(0,230,118,0.06);
+}
+.ticker-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--bg3);
+  border-right: 1px solid var(--border);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#tickerInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 14px 16px;
+  caret-color: var(--green);
+}
+#tickerInput::placeholder { color: var(--muted); font-weight: 400; font-size: 15px; text-transform: none; letter-spacing: 0; }
+.btn-fetch {
+  background: var(--green);
+  color: #000;
+  border: none;
+  padding: 0 28px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn-fetch:hover { opacity: 0.88; }
+.btn-fetch:active { transform: scale(0.98); }
+.btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 300;
+}
+.source-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.source-dot.active { background: var(--green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+.status-msg {
+  font-size: 13px;
+  color: var(--red);
+  padding: 14px 18px;
+  border: 1px solid rgba(255,68,68,0.2);
+  background: var(--red-dim);
+  border-radius: 4px;
+  margin-top: 24px;
+  display: none;
+}
+
+#resultSection { display: none; }
+
+.section-tag {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+.coin-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.coin-symbol {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -0.02em;
+}
+.coin-price {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--green);
+}
+.coin-change { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; }
+.coin-change.up { color: var(--green); }
+.coin-change.down { color: var(--red); }
+.source-badge {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  color: var(--sub);
+  margin-left: auto;
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.data-cell {
+  background: var(--bg2);
+  padding: 18px 20px;
+  transition: background 0.15s;
+}
+.data-cell:hover { background: var(--bg3); }
+.data-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.data-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.data-value.green { color: var(--green); }
+.data-value.red { color: var(--red); }
+.data-value.gold { color: var(--gold); }
+.data-value.blue { color: var(--blue); }
+.data-sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 300; }
+
+/* ── BIAS CARD ── */
+.bias-card {
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.bias-header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.bias-header-left { display: flex; flex-direction: column; gap: 6px; }
+.bias-header-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bias-verdict {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.bias-verdict.long { color: var(--green); }
+.bias-verdict.short { color: var(--red); }
+.bias-verdict.avoid { color: var(--gold); }
+.bias-verdict.neutral { color: var(--sub); }
+.bias-sub-text {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--sub);
+  line-height: 1.5;
+  max-width: 480px;
+}
+.bias-score-pills {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.score-pill {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+.score-pill.bull { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+.score-pill.bear { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+
+.bias-signals {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg2);
+}
+.signal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--sub);
+  line-height: 1.6;
+}
+.signal-icon {
+  width: 18px; height: 18px;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.signal-icon.bull { background: var(--green-dim); color: var(--green); }
+.signal-icon.bear { background: var(--red-dim); color: var(--red); }
+.signal-icon.warn { background: var(--gold-dim); color: var(--gold); }
+.signal-icon.info { background: var(--blue-dim); color: var(--blue); }
+.signal-icon.neutral { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+/* DASHBOARD TABLE */
+.dashboard {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.dash-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  background: #0a1628;
+  padding: 10px 16px;
+  color: #7a9cc4;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.dash-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  transition: background 0.1s;
+}
+.dash-row:hover { background: var(--bg3); }
+.dash-row:last-child { border-bottom: none; }
+.dash-factor { color: var(--text); font-weight: 400; }
+.dash-status { font-weight: 500; }
+.dash-status.bull { color: var(--green); }
+.dash-status.bear { color: var(--red); }
+.dash-status.warn { color: var(--gold); }
+.dash-status.neutral { color: var(--muted); }
+.dash-reading { color: var(--sub); font-weight: 300; }
+
+/* SPINNER */
+.spinner-wrap {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 300;
+}
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.4s ease, transform 0.4s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ── HERO 2-COL LAYOUT ── */
+.hero-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 40px;
+  align-items: start;
+}
+.hero-left { display: flex; flex-direction: column; }
+
+/* ── PRE-MOVE HEATMAP PANEL ── */
+.heatmap-panel {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg2);
+  position: sticky;
+  top: 72px;
+}
+.heatmap-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.heatmap-panel-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.heatmap-scan-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  padding: 5px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.heatmap-scan-btn:hover { opacity: 0.85; }
+.heatmap-scan-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.heatmap-scan-btn .hm-spin {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border: 1.5px solid rgba(0,0,0,0.25);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Progress bar inside panel */
+.hm-progress-wrap {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  display: none;
+}
+.hm-progress-bar-bg {
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+.hm-progress-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width 0.25s;
+}
+.hm-progress-text {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* Stats strip */
+.hm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.hm-stat {
+  background: var(--bg2);
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.hm-stat:hover { background: var(--bg3); }
+.hm-stat-active { background: var(--bg3) !important; box-shadow: inset 0 -2px 0 var(--green); }
+.hm-stat-label {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.hm-stat-val {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+.hm-stat-val.green { color: var(--green); }
+.hm-stat-val.red   { color: var(--red); }
+.hm-stat-val.gold  { color: var(--gold); }
+
+/* Grid area */
+.heatmap-grid-wrap { padding: 10px; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+}
+
+/* Cells */
+.hm-cell {
+  aspect-ratio: 1.35 / 1;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  position: relative;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+.hm-cell:hover { filter: brightness(1.3); transform: scale(1.05); z-index: 2; border-color: rgba(255,255,255,0.25); }
+.hm-cell:active { transform: scale(0.97); }
+.hm-cell.span2 { grid-column: span 2; aspect-ratio: 2.7/1; }
+
+/* Cell content */
+.hm-sym {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  text-align: center;
+}
+.hm-sig {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  opacity: 0.9;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Signal-based cell colors */
+.hm-squeeze-bull { background: rgba(0,230,118,0.55); }
+.hm-squeeze-bull .hm-sym,
+.hm-squeeze-bull .hm-score,
+.hm-squeeze-bull .hm-sig { color: #003d1a; }
+
+.hm-squeeze-bull-mid { background: rgba(0,230,118,0.28); }
+.hm-squeeze-bull-mid .hm-sym,
+.hm-squeeze-bull-mid .hm-score,
+.hm-squeeze-bull-mid .hm-sig { color: #00e676; }
+
+.hm-squeeze-bull-low { background: rgba(0,230,118,0.12); }
+.hm-squeeze-bull-low .hm-sym,
+.hm-squeeze-bull-low .hm-score,
+.hm-squeeze-bull-low .hm-sig { color: rgba(0,230,118,0.85); }
+
+.hm-squeeze-bear { background: rgba(255,68,68,0.55); }
+.hm-squeeze-bear .hm-sym,
+.hm-squeeze-bear .hm-score,
+.hm-squeeze-bear .hm-sig { color: #ffe0e0; }
+
+.hm-squeeze-bear-mid { background: rgba(255,68,68,0.28); }
+.hm-squeeze-bear-mid .hm-sym,
+.hm-squeeze-bear-mid .hm-score,
+.hm-squeeze-bear-mid .hm-sig { color: #ff8080; }
+
+.hm-squeeze-bear-low { background: rgba(255,68,68,0.12); }
+.hm-squeeze-bear-low .hm-sym,
+.hm-squeeze-bear-low .hm-score,
+.hm-squeeze-bear-low .hm-sig { color: rgba(255,100,100,0.85); }
+
+.hm-oi-build { background: rgba(64,196,255,0.28); }
+.hm-oi-build .hm-sym,
+.hm-oi-build .hm-score,
+.hm-oi-build .hm-sig { color: #40c4ff; }
+
+.hm-oi-unwind { background: rgba(206,147,216,0.22); }
+.hm-oi-unwind .hm-sym,
+.hm-oi-unwind .hm-score,
+.hm-oi-unwind .hm-sig { color: #ce93d8; }
+
+.hm-watch { background: rgba(255,213,79,0.18); }
+.hm-watch .hm-sym,
+.hm-watch .hm-score,
+.hm-watch .hm-sig { color: #ffd54f; }
+
+.hm-neutral { background: rgba(255,255,255,0.04); }
+.hm-neutral .hm-sym  { color: var(--sub); }
+.hm-neutral .hm-score,
+.hm-neutral .hm-sig  { color: var(--muted); }
+
+/* Firing Now — amber/orange, move in progress */
+.hm-firing-now { background: rgba(255,152,0,0.45); }
+.hm-firing-now .hm-sym,
+.hm-firing-now .hm-score,
+.hm-firing-now .hm-sig { color: #3d1f00; }
+
+/* Post-Move — greyed out, squeeze done */
+.hm-post-move { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08) !important; }
+.hm-post-move .hm-sym  { color: var(--muted); }
+.hm-post-move .hm-score,
+.hm-post-move .hm-sig  { color: #3a3f45; }
+
+/* Confidence bar at bottom of each cell */
+.hm-conf-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 3px;
+  border-radius: 0 0 2px 2px;
+  transition: width 0.3s ease;
+  opacity: 0.75;
+}
+.hm-squeeze-bull .hm-conf-bar,
+.hm-squeeze-bull-mid .hm-conf-bar,
+.hm-squeeze-bull-low .hm-conf-bar { background: var(--green); }
+.hm-squeeze-bear .hm-conf-bar,
+.hm-squeeze-bear-mid .hm-conf-bar,
+.hm-squeeze-bear-low .hm-conf-bar { background: var(--red); }
+.hm-oi-build .hm-conf-bar  { background: var(--blue); }
+.hm-oi-unwind .hm-conf-bar { background: #ce93d8; }
+.hm-watch .hm-conf-bar     { background: var(--gold); }
+.hm-firing-now .hm-conf-bar { background: var(--orange); }
+.hm-post-move .hm-conf-bar  { background: var(--muted); }
+.hm-neutral .hm-conf-bar    { background: rgba(255,255,255,0.15); }
+
+/* Score badge */
+.hm-score-badge {
+  font-family: 'Syne', sans-serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
+/* Empty / pre-scan state */
+.hm-empty {
+  grid-column: span 5;
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.9;
+}
+.hm-empty strong { color: var(--sub); font-weight: 500; }
+
+/* Legend */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+  flex-wrap: wrap;
+}
+.hm-legend-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.hm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.hm-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.hm-click-hint {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 300;
+  padding: 4px 12px 7px;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 980px) {
+  .hero-layout { grid-template-columns: 1fr; }
+  .heatmap-panel { position: static; }
+  .heatmap-grid { grid-template-columns: repeat(7, 1fr); }
+  .hm-cell.span2 { grid-column: span 2; }
+}
+@media (max-width: 640px) {
+  main { padding: 90px 16px 60px; }
+  nav { padding: 0 14px; }
+  .search-wrap { flex-direction: column; border-radius: 4px; }
+  .btn-fetch { padding: 14px; text-align: center; }
+  .dash-header, .dash-row { font-size: 10px; }
+  .footer-disc { text-align: left; }
+  .market-overview { grid-template-columns: 1fr; }
+  /* Top Volume table: rank + pair + volume + change (price + OI hidden) */
+  .tvol-col-heads, .tvol-row {
+    grid-template-columns: 22px 1fr 82px 60px;
+    gap: 4px;
+    padding: 8px 10px;
+  }
+  .tvol-col-heads .tvol-price-col,
+  .tvol-row .tvol-price,
+  .tvol-col-heads .tvol-oi-col,
+  .tvol-row .tvol-oi { display: none; }
+  .tvol-volume { font-size: 10px; }
+  .tvol-change { font-size: 10px; }
+  .heatmap-grid { grid-template-columns: repeat(5, 1fr); }
+  .hm-cell.span2 { grid-column: span 2; }
+}
+
+/* FOOTER */
+footer {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; }
+.footer-logo span { color: var(--green); }
+.footer-disc {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 300;
+  max-width: 420px;
+  text-align: right;
+  line-height: 1.6;
+}
+
+/* ── TICKER BAR ── */
+.ticker-bar {
+  position: fixed;
+  top: 56px; left: 0; right: 0;
+  z-index: 99;
+  height: 36px;
+  background: rgba(8,11,15,0.96);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  width: 100%;
+}
+.ticker-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  height: 100%;
+  padding-right: 4px;
+}
+.ticker-nav-btn {
+  height: calc(100% - 8px);
+  margin: 4px 4px;
+  padding: 0 10px;
+  background: rgba(0,230,118,0.08);
+  border: 1px solid rgba(0,230,118,0.28);
+  border-radius: 3px;
+  font-family: 'Syne', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--green);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.ticker-nav-btn:hover {
+  color: #000;
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(0,230,118,0.3);
+}
+.ticker-nav-btn:active {
+  transform: scale(0.97);
+}
+.ticker-bar-sep { display: none; }
+.ticker-track-wrap {
+  height: 100%;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+}
+.ticker-track-wrap::-webkit-scrollbar { display: none; }
+.ticker-track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+  min-width: max-content;
+}
+.ticker-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  /* NO animation — static display */
+}
+.ticker-inner:hover { /* no pause needed */ }
+.ticker-loading {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 300;
+  padding: 0 20px;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  height: 36px;
+  cursor: default;
+}
+.ticker-item-sym {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+.ticker-item-val {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--sub);
+}
+.ticker-item-chg {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+.ticker-item-chg.up   { color: var(--green); }
+.ticker-item-chg.down { color: var(--red); }
+.ticker-sep-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 36px;
+  font-family: 'Syne', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  gap: 6px;
+}
+.ticker-sep-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.ticker-mcap-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  height: 36px;
+}
+.ticker-mcap-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ticker-mcap-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ticker-mcap-val.green { color: var(--green); }
+.ticker-mcap-val.blue  { color: var(--blue); }
+
+/* ── Adjust main top padding to clear nav + ticker bar ── */
+main {
+  padding-top: 116px !important;
+}
+
+/* ── TICKER BAR ── */
+.workflow-section {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 40px;
+  background: var(--bg2);
+}
+.workflow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.workflow-tag {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.25);
+  background: var(--green-dim);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+.workflow-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--sub);
+  letter-spacing: 0.02em;
+}
+.workflow-disc-icon {
+  width: 16px; height: 16px;
+  border-radius: 2px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(255,213,79,0.2);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.workflow-steps {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.workflow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 14px 0;
+}
+.workflow-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.06);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 32px;
+  padding-top: 2px;
+}
+.workflow-body { flex: 1; }
+.workflow-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.workflow-desc {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--sub);
+  line-height: 1.75;
+  max-width: 720px;
+}
+.workflow-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 0 0 52px;
+}
+.workflow-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+}
+.workflow-footer-col {
+  padding: 16px 24px;
+}
+.workflow-footer-divider {
+  width: 1px;
+  background: var(--border);
+}
+.workflow-footer-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.workflow-footer-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .workflow-footer { grid-template-columns: 1fr; }
+  .workflow-footer-divider { width: 100%; height: 1px; }
+  .workflow-header { flex-direction: column; align-items: flex-start; }
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>ATL</span> · AlphaTradersLabs</div>
+  <div class="nav-right">
+    <div class="nav-refresh">
+      <div class="refresh-dot" id="refreshDot"></div>
+      <span id="refreshText">Loading market data...</span>
+    </div>
+    <div class="nav-badge">Derivatives Intel</div>
+    <!--
+    ════════════════════════════════════════════════════════
+    📌 NEXUS INDICATOR LINK — ADD WHEN PUBLISHED
+    ════════════════════════════════════════════════════════
+    Once your Nexus System Ultimate indicator is live on
+    TradingView, replace href="nexus.html" below with the
+    full TradingView published script URL, e.g.:
+      href="https://www.tradingview.com/script/XXXXXXXX-ATL-Nexus-System-Ultimate/"
+    Until then, "nexus.html" links to the landing page only.
+    ════════════════════════════════════════════════════════
+    -->
+    <a class="nav-nexus-btn" href="https://trainwithavi.github.io/atl-derivates-intel/nexus.html" target="_blank" rel="noopener">Nexus Ultimate</a>
+  </div>
+</nav>
+
+<!-- ── TICKER BAR ── -->
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-bar-left">
+    <button class="ticker-nav-btn" onclick="scrollToTable('volume')">TOP VOLUME ↓</button>
+    <button class="ticker-nav-btn" onclick="scrollToTable('nfr')">NEG. FUNDING ↓</button>
+    <div class="ticker-bar-sep"></div>
+  </div>
+  <div class="ticker-track-wrap">
+    <div class="ticker-track" id="tickerTrack">
+      <div class="ticker-inner" id="tickerInner">
+        <span class="ticker-loading">Loading market data...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── HERO: 2-col ── -->
+  <div class="hero-layout" style="margin-bottom:0;">
+
+    <!-- LEFT: existing title + search -->
+    <div class="hero-left">
+      <div class="hero-tag">Market Intelligence Tool</div>
+      <h1 class="hero-title">
+        <span class="accent">Derivatives</span><br>
+        <span class="dim">Intel</span> Engine
+      </h1>
+      <p class="hero-sub">Enter any ticker to fetch live Open Interest, Funding Rate, Volume, FDV and more — then get an automated market bias based on institutional derivatives logic.</p>
+
+      <div class="search-wrap" style="margin-bottom:12px;">
+        <div class="ticker-prefix">Ticker</div>
+        <input type="text" id="tickerInput" placeholder="BTC, ETH, SOL..." maxlength="20" autocomplete="off" spellcheck="false">
+        <button class="btn-fetch" id="fetchBtn" onclick="fetchData()">Fetch →</button>
+      </div>
+
+      <div class="source-row" style="margin-bottom:0;">
+        <div class="source-dot" id="sourceDot"></div>
+        <span id="sourceText">Binance Futures → Bybit → CoinGecko fallback chain</span>
+      </div>
+
+      <div class="status-msg" id="statusMsg"></div>
+      <div class="spinner-wrap" id="spinner">
+        <div class="spinner"></div>
+        <span id="spinnerText">Querying Binance Futures...</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Pre-Move Heatmap (full scanner engine) -->
+    <div class="heatmap-panel">
+
+      <div class="heatmap-panel-header">
+        <span class="heatmap-panel-title">Potential Movers</span>
+        <button class="heatmap-scan-btn" id="hmScanBtn" onclick="runHeatmapScan()">
+          <span id="hmScanBtnText">SCAN ALL PAIRS</span>
+        </button>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="hm-progress-wrap" id="hmProgressWrap">
+        <div class="hm-progress-bar-bg">
+          <div class="hm-progress-bar-fill" id="hmProgBar" style="width:0%"></div>
+        </div>
+        <div class="hm-progress-text" id="hmProgText">Starting scan...</div>
+      </div>
+
+      <!-- Stats strip — clickable filters -->
+      <div class="hm-stats" style="grid-template-columns:repeat(5,1fr);">
+        <div class="hm-stat hm-stat-active" id="hmStat-all" onclick="setHmFilter('all')" title="Show all pairs">
+          <div class="hm-stat-label">Scanned</div>
+          <div class="hm-stat-val" id="hmStatPairs">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-bull" onclick="setHmFilter('bull')" title="Bull setups only (score 55+)">
+          <div class="hm-stat-label">Bull</div>
+          <div class="hm-stat-val green" id="hmStatBull">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-bear" onclick="setHmFilter('bear')" title="Bear setups only (score 55+)">
+          <div class="hm-stat-label">Bear</div>
+          <div class="hm-stat-val red" id="hmStatBear">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-alert" onclick="setHmFilter('alert')" title="High alert — score 70+">
+          <div class="hm-stat-label">Alert 70+</div>
+          <div class="hm-stat-val gold" id="hmStatHigh">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-done" onclick="setHmFilter('done')" title="Already moved — post-squeeze or firing now">
+          <div class="hm-stat-label">Done/Live</div>
+          <div class="hm-stat-val" style="color:var(--muted);" id="hmStatDone">—</div>
+        </div>
+      </div>
+
+      <!-- Heatmap grid -->
+      <div class="heatmap-grid-wrap">
+        <div class="heatmap-grid" id="hmGrid">
+          <div class="hm-empty">
+            Hit <strong>SCAN ALL PAIRS</strong> to detect setups.<br>
+            Scores ~500 futures pairs by Funding Rate,<br>OI Delta, Price & Volume signals.
+          </div>
+        </div>
+      </div>
+
+      <div class="hm-click-hint">↑ Click any coin to fetch its full derivatives analysis</div>
+
+      <div class="heatmap-legend">
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(0,230,118,0.55)"></div>▲ PUMP — shorts overcrowded, spike likely</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,68,68,0.55)"></div>▼ DUMP — longs overcrowded, flush risk</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(64,196,255,0.28)"></div>▲ BUILDING — OI accumulating, bullish</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(206,147,216,0.22)"></div>▼ UNWIND — positions closing, bearish</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,152,0,0.45)"></div>⚡ FIRING — move in progress, closing window</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)"></div>✓ DONE — post-move, do not chase</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,213,79,0.18)"></div>◈ WATCH — conditions forming</div>
+      </div>
+      <div class="hm-click-hint" id="hmScanTime" style="color:var(--muted);padding-bottom:8px;"></div>
+
+    </div><!-- end heatmap-panel -->
+
+  </div><!-- end hero-layout -->
+
+  <!-- ── RESULT SECTION (inline, pushes content down) ── -->
+  <div id="resultSection">
+    <hr>
+    <div class="section-tag">Live Data</div>
+    <div class="coin-header">
+      <span class="coin-symbol" id="coinSymbol">—</span>
+      <span class="coin-price" id="coinPrice">—</span>
+      <span class="coin-change" id="coinChange">—</span>
+      <span class="source-badge" id="sourceBadge">—</span>
+    </div>
+    <div class="data-grid" id="dataGrid"></div>
+    <hr>
+    <div class="section-tag">Signal Dashboard</div>
+    <div class="dashboard" id="dashboard" style="margin-bottom:24px;"></div>
+    <hr>
+    <div class="section-tag">ATL Bias Engine</div>
+    <div class="bias-card" id="biasCard">
+      <div class="bias-header">
+        <div class="bias-header-left">
+          <span class="bias-header-label">Market Bias</span>
+          <span class="bias-verdict" id="biasVerdict">—</span>
+          <span class="bias-sub-text" id="biasSubText"></span>
+        </div>
+        <div class="bias-score-pills" id="biasScorePills"></div>
+      </div>
+      <div class="bias-signals" id="biasSignals"></div>
+    </div>
+  </div>
+
+  <!-- ── HOW TO USE THIS TOOL ── -->
+  <div class="workflow-section reveal">
+    <div class="workflow-header">
+      <div class="workflow-tag">Methodology</div>
+      <div class="workflow-disclaimer">
+        <span class="workflow-disc-icon">!</span>
+        This is not a signal tool — the scanner narrows the field. Your chart analysis makes the decision.
+      </div>
+    </div>
+
+    <div class="workflow-steps">
+
+      <div class="workflow-step">
+        <div class="workflow-num">01</div>
+        <div class="workflow-body">
+          <div class="workflow-title">SCAN THE MARKET</div>
+          <div class="workflow-desc">Hit Scan All Pairs. The tool checks 300–500 futures pairs simultaneously — funding rate, OI delta, OI velocity, 4h momentum — and scores every coin.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">02</div>
+        <div class="workflow-body">
+          <div class="workflow-title">BUILD YOUR WATCHLIST</div>
+          <div class="workflow-desc">Review the top coins flagged as PUMP, DUMP, or BUILDING. These are the pairs with derivatives conditions loaded — not random picks. Ignore FIRING and DONE entirely.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">03</div>
+        <div class="workflow-body">
+          <div class="workflow-title">OPEN THE CHART</div>
+          <div class="workflow-desc">Analyse each shortlisted coin independently. Apply your own price action and market structure analysis on the 1H chart — BOS, CHoCH, supply and demand zones, key levels. Do this with zero bias from the scanner.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">04</div>
+        <div class="workflow-body">
+          <div class="workflow-title">LOOK FOR CONFLUENCE</div>
+          <div class="workflow-desc">Only proceed if your chart analysis agrees with the scanner bias. Scanner says PUMP and your chart shows bullish structure at a key demand zone — that is confluence. If they disagree, skip the coin entirely.</div>
+        </div>
+      </div>
+
+      <div class="workflow-divider"></div>
+
+      <div class="workflow-step">
+        <div class="workflow-num">05</div>
+        <div class="workflow-body">
+          <div class="workflow-title">WAIT FOR YOUR TRIGGER</div>
+          <div class="workflow-desc">Drop to your lower timeframe — 15M or 5M. Wait for a structural trigger: CHoCH, FVG fill, order block reaction, liquidity sweep. That is your entry. The scanner told you where to look. Your trigger tells you when.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="workflow-footer">
+      <div class="workflow-footer-col">
+        <div class="workflow-footer-label">Scanner's job</div>
+        <div class="workflow-footer-val">Narrow 500 pairs → 10 worth watching</div>
+      </div>
+      <div class="workflow-footer-divider"></div>
+      <div class="workflow-footer-col">
+        <div class="workflow-footer-label">Your job</div>
+        <div class="workflow-footer-val">Confirm structure · Find the trigger · Manage the trade</div>
+      </div>
+      <div class="workflow-footer-divider"></div>
+      <div class="workflow-footer-col">
+        <div class="workflow-footer-label">Rescan cadence</div>
+        <div class="workflow-footer-val">Every 1–2 hours · Setups expire · Data goes stale</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOP VOLUME / NEGATIVE FUNDING PAIRS ── -->
+  <div class="tvol-card reveal">
+    <!-- Tab bar -->
+    <div class="tvol-tabs">
+      <button class="tvol-tab active" id="tabVolume" onclick="switchTab('volume')">Top Volume</button>
+      <button class="tvol-tab" id="tabNfr" onclick="switchTab('nfr')">⬇ Negative Funding</button>
+      <span class="tvol-tab-note" id="tvolNote">Loading...</span>
+    </div>
+
+    <!-- Top Volume panel -->
+    <div id="panelVolume">
+      <div class="tvol-col-heads">
+        <span>#</span>
+        <span>Pair</span>
+        <span class="tvol-price-col" style="text-align:right;">Price</span>
+        <span style="text-align:right;">24h Volume</span>
+        <span class="tvol-oi-col" style="text-align:right;">Open Interest</span>
+        <span style="text-align:right;">24h Chg</span>
+      </div>
+      <div class="tvol-list-body" id="tvolList">
+        <div class="tvol-row" style="opacity:0.35;">
+          <div class="skeleton" style="width:16px;height:10px;"></div>
+          <div class="skeleton" style="width:80px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:70px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:44px;height:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Negative Funding Rate panel -->
+    <div id="panelNfr" style="display:none;">
+      <div class="nfr-col-heads">
+        <span>#</span>
+        <span>Pair</span>
+        <span class="nfr-price-col" style="text-align:right;">Price</span>
+        <span style="text-align:right;">Funding Rate</span>
+        <span class="nfr-vol-col" style="text-align:right;">24h Volume</span>
+        <span class="nfr-oi-col" style="text-align:right;">Open Interest</span>
+        <span style="text-align:right;">24h Chg</span>
+      </div>
+      <div class="tvol-list-body" id="nfrList">
+        <div class="tvol-row" style="opacity:0.35;">
+          <div class="skeleton" style="width:16px;height:10px;"></div>
+          <div class="skeleton" style="width:80px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:70px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:44px;height:10px;"></div>
+          <div class="skeleton" style="width:44px;height:10px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-logo"><span>ATL</span> · AlphaTradersLabs</div>
+  <div class="footer-disc">For confluence use only. Not financial advice. Always combine with price action and market structure analysis.</div>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+const BINANCE_FAPI = 'https://fapi.binance.com/fapi/v1';
+const BYBIT_API    = 'https://api.bybit.com/v5/market';
+const GECKO_API    = 'https://api.coingecko.com/api/v3';
+
+// ─────────────────────────────────────────────
+// TAB SWITCHER
+// ─────────────────────────────────────────────
+let activeTab = 'volume';
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabVolume').classList.toggle('active', tab === 'volume');
+  document.getElementById('tabNfr').classList.toggle('active', tab === 'nfr');
+  document.getElementById('panelVolume').style.display = tab === 'volume' ? 'block' : 'none';
+  document.getElementById('panelNfr').style.display    = tab === 'nfr'    ? 'block' : 'none';
+  const noteEl = document.getElementById('tvolNote');
+  if (tab === 'nfr' && nfrData.length) {
+    noteEl.textContent = `${nfrData.length} coins · most negative first · squeeze watchlist`;
+  } else if (tab === 'volume') {
+    noteEl.textContent = `15 pairs · Binance + Bybit · deduplicated`;
+  }
+}
+
+let lastData = null;
+let marketRefreshTimer = null;
+let refreshCountdown = 60;
+let nfrData = []; // cached negative funding rate data
+
+// ─────────────────────────────────────────────
+// FORMAT HELPERS
+// ─────────────────────────────────────────────
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (Math.abs(n) >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+  if (Math.abs(n) >= 1e3)  return '$' + (n/1e3).toFixed(2) + 'K';
+  return '$' + n.toFixed(2);
+}
+function fmtPrice(n) {
+  if (!n || isNaN(n)) return '—';
+  if (n >= 1000) return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (n >= 1)    return '$' + n.toFixed(4);
+  if (n >= 0.01) return '$' + n.toFixed(5);
+  return '$' + n.toFixed(8);
+}
+
+// ─────────────────────────────────────────────
+// TOP VOLUME PAIRS (Binance + Bybit, deduplicated)
+// ─────────────────────────────────────────────
+async function loadTopVolume() {
+  const listEl  = document.getElementById('tvolList');
+  const noteEl  = document.getElementById('tvolNote');
+
+  try {
+    const [binRes, bybitRes, binFrRes] = await Promise.all([
+      fetch(`${BINANCE_FAPI}/ticker/24hr`).catch(() => null),
+      fetch(`${BYBIT_API}/tickers?category=linear`).catch(() => null),
+      fetch(`${BINANCE_FAPI}/premiumIndex`).catch(() => null),
+    ]);
+
+    // ── Build Binance funding rate map ──
+    const binFrMap = {};
+    if (binFrRes && binFrRes.ok) {
+      const frList = await binFrRes.json();
+      if (Array.isArray(frList)) {
+        frList.forEach(f => {
+          const base = f.symbol.replace('USDT', '');
+          binFrMap[base] = parseFloat(f.lastFundingRate) * 100;
+        });
+      }
+    }
+
+    const seen   = new Set();
+    const merged = [];
+    const nfrAll = []; // for negative funding tab
+
+    // ── Build Bybit OI map first (used to patch Binance rows — Binance bulk ticker has no OI field) ──
+    const bybitOIMap = {};
+    let bybitListData = [];
+    if (bybitRes && bybitRes.ok) {
+      const bybitData = await bybitRes.json();
+      bybitListData = bybitData.result?.list || [];
+      bybitListData.forEach(t => {
+        const base  = t.symbol.replace('USDT', '');
+        const price = parseFloat(t.lastPrice);
+        const oiUsd = parseFloat(t.openInterest) * price;
+        if (!isNaN(oiUsd) && oiUsd > 0) bybitOIMap[base] = oiUsd;
+      });
+    }
+
+    // ── Binance ──
+    if (binRes && binRes.ok) {
+      const binList = await binRes.json();
+      if (Array.isArray(binList)) {
+        binList
+          .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) > 0)
+          .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+          .slice(0, 40)
+          .forEach(t => {
+            const base = t.symbol.replace('USDT', '');
+            if (!seen.has(base)) {
+              seen.add(base);
+              const price = parseFloat(t.lastPrice);
+              const fr    = binFrMap[base] ?? null;
+              // Binance ticker/24hr bulk has no openInterest field — cross-ref Bybit OI map
+              const oi    = bybitOIMap[base] ?? null;
+              const entry = {
+                sym:    base,
+                exch:   'binance',
+                price,
+                volume: parseFloat(t.quoteVolume),
+                oi,
+                change: parseFloat(t.priceChangePercent),
+                fr,
+              };
+              merged.push(entry);
+              if (fr !== null && fr < 0) nfrAll.push(entry);
+            }
+          });
+      }
+    }
+
+    // ── Bybit (add only if base not already from Binance) ──
+    if (bybitListData.length) {
+      const bybitList = bybitListData;
+      bybitList
+        .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.volume24h) > 0)
+        .sort((a, b) => {
+          const va = parseFloat(a.volume24h) * parseFloat(a.lastPrice);
+          const vb = parseFloat(b.volume24h) * parseFloat(b.lastPrice);
+          return vb - va;
+        })
+        .slice(0, 40)
+        .forEach(t => {
+          const base = t.symbol.replace('USDT', '');
+          const price  = parseFloat(t.lastPrice);
+          const volUsd = parseFloat(t.volume24h) * price;
+          const oiUsd  = parseFloat(t.openInterest) * price;
+          const fr     = isNaN(parseFloat(t.fundingRate)) ? null : parseFloat(t.fundingRate) * 100;
+          const entry  = {
+            sym:    base,
+            exch:   'bybit',
+            price,
+            volume: volUsd,
+            oi:     isNaN(oiUsd) ? null : oiUsd,
+            change: parseFloat(t.price24hPcnt) * 100,
+            fr,
+          };
+          if (!seen.has(base)) {
+            seen.add(base);
+            merged.push(entry);
+          }
+          // Bybit can still contribute to NFR even if already in volume list from Binance
+          // (only if not already added from Binance)
+          if (fr !== null && fr < 0 && !nfrAll.find(x => x.sym === base)) {
+            nfrAll.push(entry);
+          }
+        });
+    }
+
+    // ── Top Volume: sort, top 15 ──
+    merged.sort((a, b) => b.volume - a.volume);
+    const top = merged.slice(0, 15);
+
+    if (!top.length) throw new Error('no data');
+
+    noteEl.textContent = activeTab === 'volume'
+      ? `${top.length} pairs · Binance + Bybit · deduplicated`
+      : `${Math.min(nfrAll.length, 25)} coins · most negative first`;
+
+    listEl.innerHTML = top.map((t, i) => {
+      const chgStr   = isNaN(t.change) ? '—' : (t.change >= 0 ? '+' : '') + t.change.toFixed(2) + '%';
+      const chgClass = isNaN(t.change) ? '' : t.change >= 0 ? 'up' : 'down';
+      const oiStr    = t.oi ? fmt(t.oi) : '—';
+      return `
+        <div class="tvol-row">
+          <span class="tvol-rank">${i + 1}</span>
+          <div class="tvol-sym-wrap">
+            <span class="tvol-sym">${t.sym}/USDT</span>
+            <span class="tvol-exch ${t.exch}">${t.exch === 'binance' ? 'Binance' : 'Bybit'}</span>
+          </div>
+          <span class="tvol-price">${fmtPrice(t.price)}</span>
+          <span class="tvol-volume">${fmt(t.volume)}</span>
+          <span class="tvol-oi">${oiStr}</span>
+          <span class="tvol-change ${chgClass}">${chgStr}</span>
+        </div>`;
+    }).join('');
+
+    // ── Negative Funding: sort most negative first, cap 25 ──
+    nfrData = nfrAll.sort((a, b) => a.fr - b.fr).slice(0, 25);
+    renderNfr();
+
+  } catch(e) {
+    noteEl.textContent = 'Failed to load';
+    listEl.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:11px;">Could not fetch volume data.</div>';
+  }
+}
+
+// ─────────────────────────────────────────────
+// RENDER NEGATIVE FUNDING TABLE
+// ─────────────────────────────────────────────
+function renderNfr() {
+  const el = document.getElementById('nfrList');
+  const noteEl = document.getElementById('tvolNote');
+
+  if (!nfrData.length) {
+    el.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:11px;">No coins with negative funding rate found.</div>';
+    return;
+  }
+
+  if (activeTab === 'nfr') {
+    noteEl.textContent = `${nfrData.length} coins · most negative first · squeeze watchlist`;
+  }
+
+  el.innerHTML = nfrData.map((t, i) => {
+    const chgStr   = isNaN(t.change) ? '—' : (t.change >= 0 ? '+' : '') + t.change.toFixed(2) + '%';
+    const chgClass = isNaN(t.change) ? '' : t.change >= 0 ? 'up' : 'down';
+    const oiStr    = t.oi ? fmt(t.oi) : '—';
+    const frStr    = t.fr.toFixed(4) + '%';
+    const frClass  = t.fr <= -0.05 ? 'extreme' : t.fr <= -0.02 ? 'mod' : 'mild';
+    return `
+      <div class="nfr-row">
+        <span class="tvol-rank">${i + 1}</span>
+        <div class="tvol-sym-wrap">
+          <span class="tvol-sym">${t.sym}/USDT</span>
+          <span class="tvol-exch ${t.exch}">${t.exch === 'binance' ? 'Binance' : 'Bybit'}</span>
+        </div>
+        <span class="tvol-price nfr-price">${fmtPrice(t.price)}</span>
+        <span class="nfr-funding ${frClass}">${frStr}</span>
+        <span class="tvol-volume nfr-vol">${fmt(t.volume)}</span>
+        <span class="tvol-oi nfr-oi">${oiStr}</span>
+        <span class="tvol-change ${chgClass}">${chgStr}</span>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// SCROLL TO TABLE (ticker bar buttons)
+// ─────────────────────────────────────────────
+function scrollToTable(tab) {
+  switchTab(tab);
+  const el = document.querySelector('.tvol-card');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─────────────────────────────────────────────
+// TICKER BAR BUILDER
+// ─────────────────────────────────────────────
+function buildTickerBar(mcap, mcapPct, vol24h, markets, oi) {
+  const inner = document.getElementById('tickerInner');
+  if (!inner) return;
+
+  function fmtT(n) {
+    if (!n || isNaN(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+    return '$' + n.toFixed(2);
+  }
+
+  const mcapSign  = mcapPct >= 0 ? '+' : '';
+  const mcapColor = mcapPct >= 0 ? 'green' : 'red';
+
+  // Only the 4 global market metrics — no coin list
+  const metrics = [
+    {
+      label: 'CRYPTO MKT CAP',
+      val:   fmtT(mcap),
+      cls:   mcapColor,
+      extra: mcap ? `<span class="ticker-item-chg ${mcapColor}">${mcapSign}${mcapPct?.toFixed(2)}%</span>` : ''
+    },
+    { label: '24H TRADING VOL', val: fmtT(vol24h), cls: 'blue' },
+    { label: 'TOTAL MARKETS',   val: markets ? markets.toLocaleString() : '—', cls: 'gold' },
+    { label: 'OPEN INTEREST',   val: fmtT(oi),     cls: 'green' },
+  ];
+
+  let html = '';
+  metrics.forEach(m => {
+    html += `
+      <div class="ticker-mcap-item">
+        <span class="ticker-mcap-label">${m.label}</span>
+        <span class="ticker-mcap-val ${m.cls||''}">${m.val}</span>
+        ${m.extra || ''}
+      </div>`;
+  });
+
+  // Single render — no duplication, no animation
+  inner.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────
+// MARKET OVERVIEW
+// ─────────────────────────────────────────────
+async function loadMarketOverview() {
+  try {
+    const res  = await fetch(`${GECKO_API}/global`);
+    const json = await res.json();
+    const d    = json.data;
+
+    const mcap    = d.total_market_cap?.usd || 0;
+    const vol     = d.total_volume?.usd || 0;
+    const markets = d.markets || 0;
+    const mcapPct = d.market_cap_change_percentage_24h_usd || 0;
+
+    // Store for ticker bar — will be combined with top coins after loadTopVolume
+    window._tickerMeta = { mcap, vol, markets, mcapPct };
+
+    loadTotalOI();
+
+  } catch(e) {
+    window._tickerMeta = { mcap: null, vol: null, markets: null, mcapPct: 0 };
+  }
+}
+
+async function loadTotalOI() {
+  let oi = null;
+  try {
+    const res  = await fetch(`${BYBIT_API}/tickers?category=linear`);
+    const json = await res.json();
+    if (json.retCode === 0) {
+      const list = json.result?.list || [];
+      let total = 0;
+      list.forEach(t => {
+        const v = parseFloat(t.openInterest) * parseFloat(t.lastPrice);
+        if (!isNaN(v)) total += v;
+      });
+      oi = total;
+    }
+  } catch(e) {
+    try {
+      const res  = await fetch(`${GECKO_API}/derivatives`);
+      const list = await res.json();
+      let total = 0;
+      list.forEach(d => { if (d.open_interest) total += d.open_interest; });
+      oi = total > 0 ? total : null;
+    } catch(e2) {}
+  }
+  window._tickerOI = oi;
+  tryBuildTicker();
+}
+
+function tryBuildTicker() {
+  // Build ticker as soon as market meta is ready — no longer waits for coin list
+  const meta = window._tickerMeta;
+  const oi   = window._tickerOI ?? null;
+  if (!meta) return;
+  buildTickerBar(meta.mcap, meta.mcapPct, meta.vol, meta.markets, oi);
+}
+
+// ─────────────────────────────────────────────
+// AUTO REFRESH
+// ─────────────────────────────────────────────
+function startRefreshCycle() {
+  const dot  = document.getElementById('refreshDot');
+  const text = document.getElementById('refreshText');
+  refreshCountdown = 60;
+  dot.classList.add('live');
+
+  clearInterval(marketRefreshTimer);
+  marketRefreshTimer = setInterval(() => {
+    refreshCountdown--;
+    if (refreshCountdown <= 0) {
+      refreshCountdown = 60;
+      loadAllMarketData();
+    }
+    text.textContent = `Refreshes in ${refreshCountdown}s`;
+  }, 1000);
+}
+
+async function loadAllMarketData() {
+  document.getElementById('refreshDot').classList.add('live');
+  await Promise.all([
+    loadMarketOverview(),
+    loadTopVolume(),
+  ]);
+}
+
+// ─────────────────────────────────────────────
+// TICKER FETCH HELPERS
+// ─────────────────────────────────────────────
+function setStatus(msg, show=true) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.style.display = show ? 'block' : 'none';
+}
+function setSpinner(show, text='') {
+  const el = document.getElementById('spinner');
+  el.style.display = show ? 'flex' : 'none';
+  if (text) document.getElementById('spinnerText').textContent = text;
+}
+function setSourceDot(active) {
+  document.getElementById('sourceDot').className = 'source-dot' + (active ? ' active' : '');
+}
+
+// ─────────────────────────────────────────────
+// EMA-CROSS TREND DETECTION
+// ─────────────────────────────────────────────
+function calcEMA(closes, period) {
+  if (closes.length < period) return null;
+  const k   = 2 / (period + 1);
+  let ema    = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < closes.length; i++) {
+    ema = closes[i] * k + ema * (1 - k);
+  }
+  return ema;
+}
+
+// Returns { trend, trendClass, trendDetail, ema9, ema21, ema50 }
+async function fetchTrend(sym, source) {
+  try {
+    let closes = [];
+
+    if (source === 'Binance Futures') {
+      // 60 x 4h candles (~10 days of history, plenty for EMA-50)
+      const res = await fetch(
+        `${BINANCE_FAPI}/klines?symbol=${sym}USDT&interval=4h&limit=60`
+      ).catch(() => null);
+      if (res && res.ok) {
+        const raw = await res.json();
+        closes = Array.isArray(raw) ? raw.map(c => parseFloat(c[4])) : [];
+      }
+    } else if (source === 'Bybit Linear') {
+      // Bybit kline: end=now, returns newest first — reverse after
+      const res = await fetch(
+        `${BYBIT_API}/kline?category=linear&symbol=${sym}USDT&interval=240&limit=60`
+      ).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        const list = data.result?.list || [];
+        // list[i] = [startTime, open, high, low, close, volume, turnover] — newest first
+        closes = list.map(c => parseFloat(c[4])).reverse();
+      }
+    } else {
+      // CoinGecko spot: use /coins/{id}/ohlc (free, no key, 30d / 4h bins)
+      // We already have the coin id from the gecko fetch path — re-search briefly
+      const searchRes = await fetch(
+        `${GECKO_API}/search?query=${sym}`
+      ).catch(() => null);
+      if (searchRes && searchRes.ok) {
+        const sd   = await searchRes.json();
+        const coin = sd.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase());
+        if (coin) {
+          const ohlcRes = await fetch(
+            `${GECKO_API}/coins/${coin.id}/ohlc?vs_currency=usd&days=30`
+          ).catch(() => null);
+          if (ohlcRes && ohlcRes.ok) {
+            const ohlc = await ohlcRes.json();
+            closes = ohlc.map(c => parseFloat(c[4]));
+          }
+        }
+      }
+    }
+
+    if (closes.length < 21) {
+      return { trend: 'Insufficient Data', trendClass: 'neutral', trendDetail: 'Need ≥21 candles', ema9: null, ema21: null, ema50: null };
+    }
+
+    const ema9  = calcEMA(closes, 9);
+    const ema21 = calcEMA(closes, 21);
+    const ema50 = closes.length >= 50 ? calcEMA(closes, 50) : null;
+    const last  = closes[closes.length - 1];
+
+    let trend, trendClass, trendDetail;
+
+    // Strong uptrend: price > ema9 > ema21 > ema50
+    // Strong downtrend: price < ema9 < ema21 < ema50
+    const priceAbove9  = last > ema9;
+    const priceAbove21 = last > ema21;
+    const ema9above21  = ema9 > ema21;
+    const above50      = ema50 ? ema21 > ema50 : null;
+
+    if (priceAbove9 && priceAbove21 && ema9above21 && (above50 === null || above50)) {
+      trend       = 'UPTREND';
+      trendClass  = 'bull';
+      trendDetail = ema50
+        ? `Price > EMA9 > EMA21 > EMA50 — full stack aligned bullish`
+        : `Price > EMA9 > EMA21 — short & mid EMAs aligned bullish`;
+    } else if (!priceAbove9 && !priceAbove21 && !ema9above21 && (above50 === null || !above50)) {
+      trend       = 'DOWNTREND';
+      trendClass  = 'bear';
+      trendDetail = ema50
+        ? `Price < EMA9 < EMA21 < EMA50 — full stack aligned bearish`
+        : `Price < EMA9 < EMA21 — short & mid EMAs aligned bearish`;
+    } else if (priceAbove21 && !ema9above21) {
+      trend       = 'RECOVERY';
+      trendClass  = 'warn';
+      trendDetail = `Price reclaimed EMA21 but EMA9 yet to cross above EMA21 — early recovery, not confirmed`;
+    } else if (!priceAbove21 && ema9above21) {
+      trend       = 'WEAKENING';
+      trendClass  = 'warn';
+      trendDetail = `EMA9 still above EMA21 but price below EMA21 — momentum fading, watch for cross`;
+    } else {
+      trend       = 'SIDEWAYS';
+      trendClass  = 'neutral';
+      trendDetail = `EMAs are mixed — no clear directional conviction on this timeframe (4h)`;
+    }
+
+    return { trend, trendClass, trendDetail, ema9, ema21, ema50 };
+
+  } catch(e) {
+    return { trend: 'Unavailable', trendClass: 'neutral', trendDetail: 'Could not fetch candle data', ema9: null, ema21: null, ema50: null };
+  }
+}
+
+// ─────────────────────────────────────────────
+// SUPPLEMENTARY FDV FETCH (CoinGecko, no key)
+// ─────────────────────────────────────────────
+// Coin ID cache: populated once from /coins/list, reused for all FDV lookups
+let geckoIdCache = null;
+async function getGeckoId(sym) {
+  if (!geckoIdCache) {
+    const r = await fetch(`${GECKO_API}/coins/list`).catch(() => null);
+    if (!r || !r.ok) return null;
+    geckoIdCache = await r.json();
+  }
+  const s = sym.toLowerCase();
+  // Try 1: exact symbol match, prefer id === symbol (canonical coins)
+  const exactId  = geckoIdCache.find(c => c.symbol === s && c.id === s);
+  if (exactId) return exactId.id;
+  // Try 2: symbol match, id starts with symbol (e.g. bitcoin, ethereum)
+  const prefixId = geckoIdCache.find(c => c.symbol === s && c.id.startsWith(s));
+  if (prefixId) return prefixId.id;
+  // Try 3: any symbol match
+  const anyId    = geckoIdCache.find(c => c.symbol === s);
+  if (anyId) return anyId.id;
+  // Try 4: strip leading digits (handles 1000PEPE -> pepe, 1000SHIB -> shib, etc.)
+  const stripped = s.replace(/^\d+/, '');
+  if (stripped && stripped !== s) {
+    const strippedMatch = geckoIdCache.find(c => c.symbol === stripped && c.id === stripped)
+      || geckoIdCache.find(c => c.symbol === stripped && c.id.startsWith(stripped))
+      || geckoIdCache.find(c => c.symbol === stripped);
+    if (strippedMatch) return strippedMatch.id;
+  }
+  return null;
+}
+
+async function fetchFDVById(id) {
+  const r = await fetch(
+    `${GECKO_API}/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
+  ).catch(() => null);
+  if (!r || !r.ok) return null;
+  const d = await r.json();
+  const fdv = d.market_data?.fully_diluted_valuation?.usd ?? null;
+  return typeof fdv === 'number' && fdv > 0 ? fdv : null;
+}
+
+async function fetchFDV(sym) {
+  try {
+    const id = await getGeckoId(sym);
+    if (id) {
+      const fdv = await fetchFDVById(id);
+      if (fdv) return fdv;
+    }
+    // Last resort: /search (rate-limited but sometimes works)
+    const sr = await fetch(`${GECKO_API}/search?query=${sym}`).catch(() => null);
+    if (sr && sr.ok) {
+      const sd   = await sr.json();
+      const coin = sd.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase())
+                || sd.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase().replace(/^\d+/, ''));
+      if (coin) {
+        const fdv = await fetchFDVById(coin.id);
+        if (fdv) return fdv;
+      }
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
+async function fetchBinance(sym) {
+  const pair = sym.toUpperCase() + 'USDT';
+  const [tickerRes, oiRes, frRes] = await Promise.all([
+    fetch(`${BINANCE_FAPI}/ticker/24hr?symbol=${pair}`).catch(()=>null),
+    fetch(`${BINANCE_FAPI}/openInterest?symbol=${pair}`).catch(()=>null),
+    fetch(`${BINANCE_FAPI}/premiumIndex?symbol=${pair}`).catch(()=>null),
+  ]);
+  if (!tickerRes || !tickerRes.ok) return null;
+  const ticker = await tickerRes.json();
+  if (ticker.code) return null;
+  let oi = null, fr = null, markPrice = null, indexPrice = null, nextFrTime = null;
+  if (oiRes && oiRes.ok) {
+    const oiData = await oiRes.json();
+    oi = parseFloat(oiData.openInterest) * parseFloat(ticker.lastPrice);
+  }
+  if (frRes && frRes.ok) {
+    const frData = await frRes.json();
+    fr = parseFloat(frData.lastFundingRate) * 100;
+    markPrice  = parseFloat(frData.markPrice);
+    indexPrice = parseFloat(frData.indexPrice);
+    nextFrTime = frData.nextFundingTime;
+  }
+  return {
+    source: 'Binance Futures',
+    symbol: sym.toUpperCase(),
+    markPrice: markPrice || parseFloat(ticker.lastPrice),
+    indexPrice: indexPrice || parseFloat(ticker.lastPrice),
+    price: parseFloat(ticker.lastPrice),
+    change24h: parseFloat(ticker.priceChangePercent),
+    volume24h: parseFloat(ticker.quoteVolume),
+    openInterest: oi,
+    fundingRate: fr,
+    nextFrTime: nextFrTime,
+    fdv: null,
+  };
+}
+
+async function fetchBybit(sym) {
+  const pair = sym.toUpperCase() + 'USDT';
+  const res  = await fetch(`${BYBIT_API}/tickers?category=linear&symbol=${pair}`).catch(()=>null);
+  if (!res || !res.ok) return null;
+  const data = await res.json();
+  if (data.retCode !== 0 || !data.result?.list?.length) return null;
+  const t     = data.result.list[0];
+  const price = parseFloat(t.lastPrice);
+  const oi    = parseFloat(t.openInterest) * price;
+  const fr    = parseFloat(t.fundingRate) * 100;
+  return {
+    source: 'Bybit Linear',
+    symbol: sym.toUpperCase(),
+    markPrice: parseFloat(t.markPrice) || price,
+    indexPrice: parseFloat(t.indexPrice) || price,
+    price,
+    change24h: parseFloat(t.price24hPcnt) * 100,
+    volume24h: parseFloat(t.volume24h) * price,
+    openInterest: isNaN(oi) ? null : oi,
+    fundingRate: isNaN(fr) ? null : fr,
+    nextFrTime: null,
+    fdv: null,
+  };
+}
+
+async function fetchGecko(sym) {
+  const searchRes = await fetch(`${GECKO_API}/search?query=${sym}`).catch(()=>null);
+  if (!searchRes || !searchRes.ok) return null;
+  const searchData = await searchRes.json();
+  const coin = searchData.coins?.find(c => c.symbol?.toLowerCase() === sym.toLowerCase());
+  if (!coin) return null;
+  const detailRes = await fetch(`${GECKO_API}/coins/${coin.id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`).catch(()=>null);
+  if (!detailRes || !detailRes.ok) return null;
+  const d  = await detailRes.json();
+  const md = d.market_data;
+  return {
+    source: 'CoinGecko (Spot)',
+    symbol: sym.toUpperCase(),
+    markPrice: md.current_price?.usd || null,
+    indexPrice: md.current_price?.usd || null,
+    price: md.current_price?.usd || null,
+    change24h: md.price_change_percentage_24h || null,
+    volume24h: md.total_volume?.usd || null,
+    openInterest: null,
+    fundingRate: null,
+    nextFrTime: null,
+    fdv: md.fully_diluted_valuation?.usd || null,
+  };
+}
+
+// ─────────────────────────────────────────────
+// OI DELTA — session cache (historical endpoints are server-only, CORS blocked)
+// Stores the OI snapshot from 2+ searches ago per symbol and computes real delta
+// ─────────────────────────────────────────────
+const oiCache = {}; // { SYM: [{ oi, ts }, ...] } — up to 10 entries per symbol
+
+function recordOI(sym, oi) {
+  if (oi === null || isNaN(oi)) return;
+  if (!oiCache[sym]) oiCache[sym] = [];
+  oiCache[sym].push({ oi, ts: Date.now() });
+  if (oiCache[sym].length > 10) oiCache[sym].shift();
+}
+
+async function fetchOIDelta(sym, source, currentOI) {
+  // Returns { oiTrend: number|null }
+  // Strategy: always try Bybit open-interest hist first (CORS-friendly, works for all major pairs)
+  // Binance openInterestHist is permanently CORS-blocked in browsers.
+  // If Bybit hist fails (coin not on Bybit), fall back to session OI cache.
+  if (source === 'CoinGecko (Spot)') return { oiTrend: null };
+
+  try {
+    const res = await fetch(
+      `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`
+    ).catch(() => null);
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data.retCode === 0) {
+        const list = data.result?.list || [];
+        if (list.length >= 2) {
+          const newer   = parseFloat(list[0].openInterest);
+          const older   = parseFloat(list[list.length - 1].openInterest);
+          if (!isNaN(newer) && !isNaN(older) && older > 0) {
+            const oiTrend = ((newer - older) / older) * 100;
+            return { oiTrend };
+          }
+        }
+      }
+    }
+  } catch(e) {}
+
+  // Bybit hist failed — fall back to session cache
+  if (currentOI === null || isNaN(currentOI)) return { oiTrend: null };
+  const history = oiCache[sym] || [];
+  if (history.length === 0) {
+    recordOI(sym, currentOI);
+    return { oiTrend: null };
+  }
+  const oldest  = history[0];
+  const ageMins = (Date.now() - oldest.ts) / 60000;
+  const oiTrend = ((currentOI - oldest.oi) / oldest.oi) * 100;
+  recordOI(sym, currentOI);
+  if (ageMins < 5 && history.length < 2) return { oiTrend: null };
+  return { oiTrend };
+}
+
+// ─────────────────────────────────────────────
+// BIAS ENGINE — plain-language rewrite
+// ─────────────────────────────────────────────
+const VERDICTS = {
+  strongBull: {
+    verdict: 'Strong Buy Conditions',
+    sub:     'Multiple signals align in favour of buyers. Open Interest is growing alongside price, and funding rates are not yet overextended. Conditions are healthy for long positions.',
+    cls:     'long',
+  },
+  cautBull: {
+    verdict: 'Leaning Bullish — Proceed With Caution',
+    sub:     'More bullish signals than bearish, but the setup is not clean. Consider smaller position sizing and tighter stops.',
+    cls:     'long',
+  },
+  neutral: {
+    verdict: 'No Clear Direction — Market Is Undecided',
+    sub:     'Signals are mixed or absent. There is no reliable edge here. Wait for a cleaner setup before committing capital.',
+    cls:     'neutral',
+  },
+  cautBear: {
+    verdict: 'Leaning Bearish — Selling Pressure Building',
+    sub:     'More bearish signals than bullish. The market is showing early signs of distribution. Avoid fresh longs. If short, keep size modest.',
+    cls:     'short',
+  },
+  strongBear: {
+    verdict: 'High Risk — Data Favours Sellers',
+    sub:     'Multiple bearish signals firing simultaneously. Longs are in danger of being squeezed or stopped out. Not a safe environment to buy.',
+    cls:     'short',
+  },
+  avoid: {
+    verdict: 'Avoid This Market — Liquidity Too Low',
+    sub:     'Trading volume is dangerously thin. Low liquidity means prices can be moved easily by a single large player, making every signal unreliable. Step aside.',
+    cls:     'avoid',
+  },
+};
+
+const SIGNAL_MSGS = {
+  // OI
+  oiLongBuildup:  'Open Interest is rising while price moves up — this means new money is entering on the buy side. Fresh buyers are stepping in aggressively. Bullish.',
+  oiShortBuildup: 'Open Interest is rising while price is falling — new money is entering on the sell side. Fresh sellers are committing to lower prices. Bearish.',
+  oiShortCover:   'Open Interest is dropping while price is rising — this rally is shorts closing their positions, not new buyers entering. The move may lack conviction and could fade.',
+  oiLongUnwind:   'Open Interest is dropping while price falls — longs are exiting their positions. Bearish pressure exists, but it may slow as sellers exit.',
+  oiStable:       'Open Interest is stable with no significant change. There is no strong directional conviction from derivatives positioning right now.',
+  oiNoHistory:    'This is the first time fetching this coin. Open Interest trend will appear on the next search as the tool now has a baseline to compare.',
+
+  // Funding Rate
+  frExtremeLong:  'Funding rate is extremely high — longs are paying a large premium to hold their positions. When funding gets this crowded, a sharp drop often follows to flush them out. Be careful.',
+  frMildLong:     'Funding rate is slightly elevated — longs are paying shorts. This suggests mild bullish bias in the market, but watch for this to increase further.',
+  frExtremeShort: 'Funding rate is deeply negative — shorts are paying longs. The market is very crowded on the sell side. A sudden sharp squeeze upward is possible if any positive catalyst appears.',
+  frMildShort:    'Funding rate is mildly negative — shorts are paying longs. Slight bearish lean in positioning, but not yet at squeeze territory.',
+  frNeutral:      'Funding rate is near zero — neither longs nor shorts are paying a significant premium. No extreme directional positioning detected.',
+
+  // Volume
+  volVeryLow:  'Volume relative to this coin\'s total market size is extremely small. This means a single large trade can swing the price significantly. All signals here should be treated with scepticism.',
+  volLow:      'Volume is below average for this coin\'s market cap. Liquidity is reduced. Be cautious with position sizing and watch for wide spreads.',
+  volHealthy:  'Volume is healthy and proportionate to the market size. Signals from this coin are more likely to be reliable.',
+  volAbsLow:   '24h trading volume is below $500K. This coin barely trades. Price can be manipulated easily by a small number of players. Avoid until volume improves.',
+  volAbsMod:   '24h volume is modest. Acceptable for smaller positions, but not ideal for meaningful size.',
+  volAbsHigh:  '24h volume is strong. There is good market participation and liquidity to support reliable trading.',
+
+  // Spot only
+  spotOnly:    'Data is from the spot market only — Open Interest and Funding Rate are not available. The bias is based on price action and volume alone, which gives an incomplete picture.',
+};
+
+function computeBias(data, oiTrend) {
+  const signals  = [];
+  let bullScore  = 0;
+  let bearScore  = 0;
+
+  const { openInterest, fundingRate, volume24h, fdv, change24h, symbol, source } = data;
+  const isFutures = source !== 'CoinGecko (Spot)';
+
+  if (!isFutures) {
+    signals.push({ icon: 'warn', text: SIGNAL_MSGS.spotOnly });
+  }
+
+  // ── OI Analysis ──
+  if (openInterest !== null && oiTrend !== null) {
+    if (oiTrend > 1 && change24h > 0) {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.oiLongBuildup });
+      bullScore += 2;
+    } else if (oiTrend > 1 && change24h < 0) {
+      signals.push({ icon: 'bear', text: SIGNAL_MSGS.oiShortBuildup });
+      bearScore += 2;
+    } else if (oiTrend < -1 && change24h > 0) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.oiShortCover });
+      bearScore += 1;
+    } else if (oiTrend < -1 && change24h < 0) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.oiLongUnwind });
+      bearScore += 1;
+    } else {
+      signals.push({ icon: 'info', text: SIGNAL_MSGS.oiStable });
+    }
+  } else if (isFutures && openInterest !== null) {
+    signals.push({ icon: 'info', text: 'Open Interest data available but historical delta could not be computed for this coin right now.' });
+  }
+
+  // ── Funding Rate Analysis ──
+  if (fundingRate !== null) {
+    const fr = fundingRate;
+    if (fr >= 0.05) {
+      signals.push({ icon: 'bear', text: SIGNAL_MSGS.frExtremeLong });
+      bearScore += 2;
+    } else if (fr >= 0.01) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.frMildLong });
+      bearScore += 0.5;
+    } else if (fr <= -0.05) {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.frExtremeShort });
+      bullScore += 2;
+    } else if (fr <= -0.01) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.frMildShort });
+      bullScore += 0.5;
+    } else {
+      signals.push({ icon: 'info', text: SIGNAL_MSGS.frNeutral });
+    }
+  }
+
+  // ── Volume Analysis ──
+  if (volume24h !== null && fdv !== null) {
+    const ratio = volume24h / fdv;
+    if (ratio < 0.002) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.volVeryLow });
+      bearScore += 1;
+    } else if (ratio < 0.01) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.volLow });
+    } else {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.volHealthy });
+      bullScore += 0.5;
+    }
+  } else if (volume24h !== null) {
+    if (volume24h < 500000) {
+      signals.push({ icon: 'warn', text: SIGNAL_MSGS.volAbsLow });
+      bearScore += 1;
+    } else if (volume24h < 5000000) {
+      signals.push({ icon: 'info', text: SIGNAL_MSGS.volAbsMod });
+    } else {
+      signals.push({ icon: 'bull', text: SIGNAL_MSGS.volAbsHigh });
+      bullScore += 0.5;
+    }
+  }
+
+  // ── Verdict ──
+  const lowLiq = signals.find(s =>
+    s.text.includes('barely trades') || s.text.includes('$500K') || s.text.includes('dangerously thin') || s.text.includes('below $500K')
+  );
+
+  let v;
+  const total = bullScore + bearScore;
+  if (lowLiq) {
+    v = VERDICTS.avoid;
+  } else if (total === 0) {
+    v = VERDICTS.neutral;
+  } else if (bearScore >= 3 && bearScore > bullScore * 1.5) {
+    v = VERDICTS.strongBear;
+  } else if (bearScore > bullScore) {
+    v = VERDICTS.cautBear;
+  } else if (bullScore >= 3 && bullScore > bearScore * 1.5) {
+    v = VERDICTS.strongBull;
+  } else if (bullScore > bearScore) {
+    v = VERDICTS.cautBull;
+  } else {
+    v = VERDICTS.neutral;
+  }
+
+  return { ...v, signals, bullScore, bearScore };
+}
+
+// ─────────────────────────────────────────────
+// DASHBOARD TABLE
+// ─────────────────────────────────────────────
+function buildDashboard(data, bias, trendObj, oiTrend) {
+  const { openInterest, fundingRate, volume24h, change24h, source } = data;
+  const isFutures = source !== 'CoinGecko (Spot)';
+
+  let oiStatus = '—', oiClass = 'neutral', oiReading = 'Historical delta unavailable';
+  if (oiTrend !== null) {
+    if (oiTrend > 1 && change24h > 0)       { oiStatus = 'LONG BUILDUP';  oiClass = 'bull'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h Δ) · Price +${change24h.toFixed(2)}%`; }
+    else if (oiTrend > 1 && change24h < 0)  { oiStatus = 'SHORT BUILDUP'; oiClass = 'bear'; oiReading = `OI +${oiTrend.toFixed(1)}% (24h Δ) · Price ${change24h.toFixed(2)}%`; }
+    else if (oiTrend < -1 && change24h > 0) { oiStatus = 'SHORT COVER';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h Δ) · Weak rally`; }
+    else if (oiTrend < -1 && change24h < 0) { oiStatus = 'LONG UNWIND';   oiClass = 'warn'; oiReading = `OI ${oiTrend.toFixed(1)}% (24h Δ) · Sellers exiting`; }
+    else { oiStatus = 'STABLE'; oiClass = 'neutral'; oiReading = `OI Δ${oiTrend.toFixed(1)}% (24h)`; }
+  } else if (!isFutures) { oiReading = 'Spot data — not available'; }
+
+  let frStatus = '—', frClass = 'neutral', frReading = '—';
+  if (fundingRate !== null) {
+    if (fundingRate >= 0.05)       { frStatus = 'LONGS OVERCROWDED'; frClass = 'bear'; frReading = `${fundingRate.toFixed(4)}% · Squeeze risk`; }
+    else if (fundingRate >= 0.01)  { frStatus = 'MILD LONG BIAS';    frClass = 'warn'; frReading = `${fundingRate.toFixed(4)}% · Watch funding`; }
+    else if (fundingRate <= -0.05) { frStatus = 'SHORTS OVERCROWDED';frClass = 'bull'; frReading = `${fundingRate.toFixed(4)}% · Squeeze risk`; }
+    else if (fundingRate <= -0.01) { frStatus = 'MILD SHORT BIAS';   frClass = 'warn'; frReading = `${fundingRate.toFixed(4)}% · Watch funding`; }
+    else { frStatus = 'NEUTRAL'; frClass = 'neutral'; frReading = `${fundingRate.toFixed(4)}%`; }
+  } else if (!isFutures) { frReading = 'Spot data — not available'; }
+
+  let volStatus = '—', volClass = 'neutral', volReading = fmt(volume24h);
+  if (volume24h < 500000)   { volStatus = 'DANGEROUSLY LOW'; volClass = 'warn'; volReading += ' · Avoid'; }
+  else if (volume24h < 5e6) { volStatus = 'MODERATE';        volClass = 'neutral'; }
+  else                       { volStatus = 'HEALTHY';         volClass = 'bull'; }
+
+  // ── Trend row ──
+  const trendStatus  = trendObj ? trendObj.trend      : '—';
+  const trendClass   = trendObj ? trendObj.trendClass : 'neutral';
+  const trendReading = trendObj ? trendObj.trendDetail : 'Not computed';
+
+  const rows = [
+    { factor: 'Overall Trend (4h EMA)', status: trendStatus,              statusClass: trendClass,  reading: trendReading },
+    { factor: 'OI & Price Action',      status: oiStatus,                 statusClass: oiClass,     reading: oiReading },
+    { factor: 'Funding Rate',           status: frStatus,                 statusClass: frClass,     reading: frReading },
+    { factor: '24h Volume',             status: volStatus,                statusClass: volClass,    reading: volReading },
+    { factor: 'Overall Bias',           status: bias.verdict.split('—')[0].trim(), statusClass: bias.cls, reading: `${bias.bullScore} bullish · ${bias.bearScore} bearish signals` },
+  ];
+
+  document.getElementById('dashboard').innerHTML = `
+    <div class="dash-header">
+      <span>Factor</span><span>Status</span><span>Reading</span>
+    </div>
+    ${rows.map(r => `
+      <div class="dash-row">
+        <span class="dash-factor">${r.factor}</span>
+        <span class="dash-status ${r.statusClass}">${r.status}</span>
+        <span class="dash-reading">${r.reading}</span>
+      </div>`).join('')}
+  `;
+}
+
+// ─────────────────────────────────────────────
+// RENDER RESULT
+// ─────────────────────────────────────────────
+async function renderResult(data) {
+  lastData = data;
+
+  // ── Fetch OI delta from historical endpoint (stateless, works on first search) ──
+  const { oiTrend } = await fetchOIDelta(data.symbol, data.source, data.openInterest);
+
+  const bias = computeBias(data, oiTrend);
+
+  document.getElementById('resultSection').style.display = 'block';
+  document.getElementById('coinSymbol').textContent = data.symbol;
+  document.getElementById('coinPrice').textContent  = fmtPrice(data.price);
+
+  const chEl = document.getElementById('coinChange');
+  chEl.textContent = data.change24h !== null ? (data.change24h >= 0 ? '+' : '') + data.change24h.toFixed(2) + '%' : '—';
+  chEl.className   = 'coin-change ' + (data.change24h >= 0 ? 'up' : 'down');
+
+  document.getElementById('sourceBadge').textContent = data.source;
+
+  const isFutures = data.source !== 'CoinGecko (Spot)';
+
+  const frDisplay = data.fundingRate !== null
+    ? { val: data.fundingRate.toFixed(4) + '%', cls: data.fundingRate > 0.01 ? 'red' : data.fundingRate < -0.01 ? 'green' : 'blue', sub: data.fundingRate > 0 ? 'Longs paying shorts' : 'Shorts paying longs' }
+    : { val: '—', cls: '', sub: 'Spot data only' };
+
+  const oiDisplay = data.openInterest !== null
+    ? { val: fmt(data.openInterest), cls: 'blue', sub: 'USD notional' }
+    : { val: '—', cls: '', sub: isFutures ? 'Unavailable' : 'Spot data only' };
+
+  const cells = [
+    { label: 'Mark Price',    val: fmtPrice(data.markPrice),   cls: 'green', sub: 'Futures mark' },
+    { label: 'Index Price',   val: fmtPrice(data.indexPrice),  cls: '',      sub: 'Spot reference' },
+    { label: '24h Volume',    val: fmt(data.volume24h),        cls: data.volume24h > 5e6 ? 'green' : data.volume24h < 5e5 ? 'red' : 'gold', sub: 'Quote volume' },
+    { label: '24h Change',    val: (data.change24h !== null ? (data.change24h >= 0 ? '+' : '') + data.change24h.toFixed(2) + '%' : '—'), cls: data.change24h >= 0 ? 'green' : 'red', sub: 'Price delta' },
+    { label: 'Open Interest', val: oiDisplay.val,              cls: oiDisplay.cls, sub: oiDisplay.sub },
+    { label: 'Funding Rate',  val: frDisplay.val,              cls: frDisplay.cls, sub: frDisplay.sub },
+    { label: 'FDV',           val: data.fdv ? fmt(data.fdv) : '—', cls: 'gold', sub: 'Fully diluted' },
+  ];
+
+  document.getElementById('dataGrid').innerHTML = cells.map(c => `
+    <div class="data-cell">
+      <div class="data-label">${c.label}</div>
+      <div class="data-value ${c.cls}">${c.val}</div>
+      <div class="data-sub">${c.sub}</div>
+    </div>`).join('');
+
+  // ── Render dashboard immediately with trend loading state ──
+  buildDashboard(data, bias, { trend: 'Fetching...', trendClass: 'neutral', trendDetail: 'Computing EMA-cross on 4h candles...' }, oiTrend);
+
+  document.getElementById('biasVerdict').textContent  = bias.verdict;
+  document.getElementById('biasVerdict').className    = 'bias-verdict ' + bias.cls;
+  document.getElementById('biasSubText').textContent  = bias.sub;
+  document.getElementById('biasScorePills').innerHTML =
+    `<div class="score-pill bull">▲ ${bias.bullScore} Bullish</div>` +
+    `<div class="score-pill bear">▼ ${bias.bearScore} Bearish</div>`;
+
+  document.getElementById('biasSignals').innerHTML = bias.signals.map(s => `
+    <div class="signal-row">
+      <div class="signal-icon ${s.icon}">${s.icon === 'bull' ? '▲' : s.icon === 'bear' ? '▼' : s.icon === 'warn' ? '!' : s.icon === 'info' ? 'i' : '—'}</div>
+      <span>${s.text}</span>
+    </div>`).join('');
+
+  document.querySelectorAll('.reveal').forEach(el => {
+    setTimeout(() => el.classList.add('visible'), 50);
+  });
+
+  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // ── Fetch trend async, update dashboard when ready ──
+  const trendObj = await fetchTrend(data.symbol, data.source);
+
+  // Factor trend into bias score for updated verdict
+  let updatedBull = bias.bullScore;
+  let updatedBear = bias.bearScore;
+  if (trendObj.trendClass === 'bull')    updatedBull += 1.5;
+  else if (trendObj.trendClass === 'bear') updatedBear += 1.5;
+  else if (trendObj.trendClass === 'warn') { updatedBull += 0.25; updatedBear += 0.25; }
+
+  const updatedBias = { ...bias, bullScore: updatedBull, bearScore: updatedBear };
+
+  buildDashboard(data, updatedBias, trendObj, oiTrend);
+
+  // Refresh verdict with trend factored in
+  const VERDICTS_REF = {
+    strongBull: { verdict: 'Strong Buy Conditions',            sub: bias.sub, cls: 'long'    },
+    cautBull:   { verdict: 'Leaning Bullish — Proceed With Caution', sub: bias.sub, cls: 'long' },
+    neutral:    { verdict: 'No Clear Direction — Market Is Undecided', sub: bias.sub, cls: 'neutral' },
+    cautBear:   { verdict: 'Leaning Bearish — Selling Pressure Building', sub: bias.sub, cls: 'short' },
+    strongBear: { verdict: 'High Risk — Data Favours Sellers',  sub: bias.sub, cls: 'short'   },
+    avoid:      { verdict: 'Avoid This Market — Liquidity Too Low', sub: bias.sub, cls: 'avoid' },
+  };
+  const lowLiq = bias.signals.find(s =>
+    s.text.includes('barely trades') || s.text.includes('$500K') || s.text.includes('dangerously thin') || s.text.includes('below $500K')
+  );
+  let finalVerdict;
+  if (lowLiq) { finalVerdict = VERDICTS_REF.avoid; }
+  else if (updatedBear >= 3 && updatedBear > updatedBull * 1.5) { finalVerdict = VERDICTS_REF.strongBear; }
+  else if (updatedBear > updatedBull)  { finalVerdict = VERDICTS_REF.cautBear; }
+  else if (updatedBull >= 3 && updatedBull > updatedBear * 1.5) { finalVerdict = VERDICTS_REF.strongBull; }
+  else if (updatedBull > updatedBear)  { finalVerdict = VERDICTS_REF.cautBull; }
+  else { finalVerdict = VERDICTS_REF.neutral; }
+
+  document.getElementById('biasVerdict').textContent = finalVerdict.verdict;
+  document.getElementById('biasVerdict').className   = 'bias-verdict ' + finalVerdict.cls;
+  document.getElementById('biasScorePills').innerHTML =
+    `<div class="score-pill bull">▲ ${updatedBull} Bullish</div>` +
+    `<div class="score-pill bear">▼ ${updatedBear} Bearish</div>`;
+}
+
+// ─────────────────────────────────────────────
+// MAIN FETCH
+// ─────────────────────────────────────────────
+async function fetchData() {
+  const raw = document.getElementById('tickerInput').value.trim();
+  if (!raw) return;
+  const sym = raw.toUpperCase().replace(/USDT|BUSD|USD|PERP/gi, '');
+
+  setStatus('', false);
+  setSpinner(true, `Querying Binance Futures for ${sym}USDT...`);
+  setSourceDot(true);
+  document.getElementById('fetchBtn').disabled = true;
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('sourceText').textContent = `Checking Binance Futures → Bybit → CoinGecko...`;
+
+  let data = null;
+
+  try { data = await fetchBinance(sym); if (data) document.getElementById('sourceText').textContent = `Live data from Binance Futures`; } catch(e) {}
+  if (!data) {
+    setSpinner(true, `Not on Binance. Trying Bybit...`);
+    try { data = await fetchBybit(sym); if (data) document.getElementById('sourceText').textContent = `Live data from Bybit Linear`; } catch(e) {}
+  }
+  if (!data) {
+    setSpinner(true, `Trying CoinGecko (spot)...`);
+    try { data = await fetchGecko(sym); if (data) document.getElementById('sourceText').textContent = `Spot data from CoinGecko (no OI/Funding)`; } catch(e) {}
+  }
+
+  setSpinner(false);
+  setSourceDot(false);
+  document.getElementById('fetchBtn').disabled = false;
+
+  if (!data) {
+    setStatus(`"${sym}" not found on Binance Futures, Bybit, or CoinGecko. Check the ticker and try again.`);
+    document.getElementById('sourceText').textContent = `Binance Futures → Bybit → CoinGecko fallback chain`;
+    return;
+  }
+
+  // Patch FDV for futures sources (Binance/Bybit don't carry FDV natively)
+  if (data.fdv === null && data.source !== 'CoinGecko (Spot)') {
+    setSpinner(true, `Fetching FDV from CoinGecko...`);
+    data.fdv = await fetchFDV(sym);
+    setSpinner(false);
+  }
+
+  await renderResult(data);
+}
+
+document.getElementById('tickerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fetchData();
+});
+
+// ═════════════════════════════════════════════
+// PRE-MOVE SCANNER ENGINE v8 (heatmap panel)
+// ═════════════════════════════════════════════
+let hmResults = [];
+let hmLastScanTime = null;
+let hmRescanCooldownTimer = null;
+
+// ── Score engine v8 ──
+function pmComputeScore(coin) {
+  const { fr, oiDelta, oiVelocity, change24h, change4h, change1h, volume } = coin;
+  let bullScore = 0, bearScore = 0;
+  const breakdown = { bull: {}, bear: {} };
+
+  // ── Fix #9: Funding Rate scoring (unchanged thresholds, same as v7) ──
+  if (fr !== null) {
+    if      (fr <= -0.05) { bullScore += 35; breakdown.bull.funding = 35; }
+    else if (fr <= -0.02) { bullScore += 22; breakdown.bull.funding = 22; }
+    else if (fr <= -0.01) { bullScore += 12; breakdown.bull.funding = 12; }
+    else                  { breakdown.bull.funding = 0; }
+    if      (fr >= 0.05)  { bearScore += 35; breakdown.bear.funding = 35; }
+    else if (fr >= 0.02)  { bearScore += 22; breakdown.bear.funding = 22; }
+    else if (fr >= 0.01)  { bearScore += 12; breakdown.bear.funding = 12; }
+    else                  { breakdown.bear.funding = 0; }
+  }
+
+  // ── Fix #4 & #5: OI delta with velocity modifier ──
+  if (oiDelta !== null) {
+    let oiBull = 0, oiBear = 0;
+    if      (oiDelta > 15)  { oiBull = 30; oiBear = 20; }
+    else if (oiDelta > 8)   { oiBull = 22; oiBear = 16; }
+    else if (oiDelta > 5)   { oiBull = 14; oiBear = 10; } // Fix #14: raised from >3 to >5
+    else if (oiDelta > 1)   { oiBull =  8; oiBear =  6; }
+    else if (oiDelta < -10) { oiBear = 18; }
+
+    // Fix #4: OI acceleration bonus
+    if (oiVelocity !== null && oiVelocity > 2) {
+      oiBull = Math.min(oiBull + 10, 40);
+      oiBear = Math.min(oiBear + 10, 30);
+    }
+    // Fix #5: OI deceleration penalty
+    if (oiVelocity !== null && oiVelocity < -3) {
+      oiBull = Math.max(oiBull - 15, 0);
+      oiBear = Math.max(oiBear - 15, 0);
+    }
+
+    bullScore += oiBull; bearScore += oiBear;
+    breakdown.bull.oi = oiBull; breakdown.bear.oi = oiBear;
+  }
+
+  // ── Fix #9: Price change scoring — extended penalty for already-moved coins ──
+  if (change24h !== null) {
+    // Bull price scoring
+    if      (change24h >= -3  && change24h <= 5)  { bullScore += 20; breakdown.bull.price = 20; }
+    else if (change24h >= -8  && change24h <= 12) { bullScore += 10; breakdown.bull.price = 10; }
+    else if (change24h > 12)  { bullScore -= 10; breakdown.bull.price = -10; } // penalty: already pumped
+    else                      { breakdown.bull.price = 0; }
+    // Bear price scoring
+    if      (change24h >= -5  && change24h <= 3)  { bearScore += 20; breakdown.bear.price = 20; }
+    else if (change24h >= -12 && change24h <= 8)  { bearScore += 10; breakdown.bear.price = 10; }
+    else if (change24h < -12) { bearScore -= 10; breakdown.bear.price = -10; } // penalty: already dumped
+    else                      { breakdown.bear.price = 0; }
+  }
+
+  // ── Fix #11: Volume scoring (unchanged thresholds) ──
+  if (volume !== null) {
+    if      (volume > 100e6) { bullScore += 15; bearScore += 15; breakdown.bull.vol = 15; breakdown.bear.vol = 15; }
+    else if (volume > 30e6)  { bullScore += 10; bearScore += 10; breakdown.bull.vol = 10; breakdown.bear.vol = 10; }
+    else if (volume > 8e6)   { bullScore +=  5; bearScore +=  5; breakdown.bull.vol = 5;  breakdown.bear.vol = 5; }
+    else                     { breakdown.bull.vol = 0; breakdown.bear.vol = 0; }
+  }
+
+  // ── Fix #10: FR + OI coherence check ──
+  // Extreme negative FR (squeeze-bull setup) but OI dropping = shorts already liquidated
+  if (fr !== null && fr <= -0.05 && oiDelta !== null && oiDelta < 0) {
+    bullScore = Math.max(bullScore - 10, 0);
+  }
+  // Extreme positive FR (squeeze-bear setup) but OI dropping = longs already liquidated
+  if (fr !== null && fr >= 0.05 && oiDelta !== null && oiDelta < 0) {
+    bearScore = Math.max(bearScore - 10, 0);
+  }
+
+  const direction = bullScore >= bearScore ? 'bull' : 'bear';
+  const rawScore  = direction === 'bull' ? bullScore : bearScore;
+  const score     = Math.min(100, Math.max(0, rawScore));
+
+  // ── Determine base signal ──
+  let signal = 'neutral';
+
+  // ── Fix #1, #2, #3, #7, #8: Hard disqualifier gates ──
+  // Gate 1: 4h move already fired
+  const abs4h = change4h !== null ? Math.abs(change4h) : 0;
+  if (abs4h > 15) {
+    // Fix #12/#13: classify as firing-now or post-move rather than hard-excluding
+    // so they appear in the DONE tab
+    if (change4h > 0 && direction === 'bull') signal = 'firing-now';
+    else if (change4h < 0 && direction === 'bear') signal = 'firing-now';
+    else signal = 'post-move';
+    return { score, direction, signal, breakdown: breakdown[direction] };
+  }
+
+  // Gate 2: Post-squeeze — FR normalised but big 24h move
+  const absFr = fr !== null ? Math.abs(fr) : 999;
+  const abs24h = change24h !== null ? Math.abs(change24h) : 0;
+  if (absFr < 0.01 && abs24h > 10) {
+    signal = 'post-move';
+    return { score, direction, signal, breakdown: breakdown[direction] };
+  }
+
+  // Gate 3: In-progress squeeze — 1h candle already surging with OI dropping
+  const abs1h = change1h !== null ? Math.abs(change1h) : 0;
+  if (abs1h > 8 && oiDelta !== null && oiDelta < 0) {
+    signal = 'firing-now';
+    return { score, direction, signal, breakdown: breakdown[direction] };
+  }
+
+  // Gate 4: Fix #8 — 4h vs 24h divergence (4h accounts for >70% of 24h move)
+  if (change4h !== null && change24h !== null && Math.abs(change24h) > 5) {
+    const ratio = Math.abs(change4h) / Math.abs(change24h);
+    if (ratio > 0.70) {
+      // Most of the move happened recently — late entry risk, downgrade
+      signal = 'watch';
+      return { score: Math.max(score - 15, 0), direction, signal, breakdown: breakdown[direction] };
+    }
+  }
+
+  // ── Normal signal classification ──
+  if (direction === 'bull') {
+    // Fix #14: squeeze-bull now requires OI delta > 5% (raised from 3%) AND velocity not decelerating
+    if (fr !== null && fr <= -0.05 && oiDelta !== null && oiDelta > 5 && (oiVelocity === null || oiVelocity >= 0)) {
+      signal = 'squeeze-bull';
+    }
+    // Fix #6: oi-build requires OI still accelerating (velocity >= 0)
+    else if (oiDelta !== null && oiDelta > 8 && (oiVelocity === null || oiVelocity >= -1)) {
+      signal = 'oi-build';
+    }
+    else if (score >= 45) signal = 'watch';
+  } else {
+    // Fix #14: squeeze-bear same tightening
+    if (fr !== null && fr >= 0.05 && oiDelta !== null && oiDelta > 5 && (oiVelocity === null || oiVelocity >= 0)) {
+      signal = 'squeeze-bear';
+    }
+    else if (oiDelta !== null && oiDelta < -10) signal = 'oi-unwind';
+    else if (score >= 45) signal = 'watch';
+  }
+
+  return { score, direction, signal, breakdown: breakdown[direction] };
+}
+
+// ── OI delta + velocity + kline fetch per coin ──
+async function pmFetchCoinData(sym) {
+  let oiDelta = null, oiVelocity = null, change4h = null, change1h = null;
+
+  try {
+    // OI history: 25 × 1h snapshots
+    const oiRes = await fetch(
+      `${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`
+    ).catch(() => null);
+
+    if (oiRes && oiRes.ok) {
+      const d    = await oiRes.json();
+      const list = d.result?.list || [];
+      if (list.length >= 4) {
+        const vals   = list.map(x => parseFloat(x.openInterest)).reverse(); // oldest first
+        const newest = vals[vals.length - 1];
+        const oldest = vals[0];
+        if (!isNaN(newest) && !isNaN(oldest) && oldest > 0) {
+          oiDelta = ((newest - oldest) / oldest) * 100;
+
+          // Fix #4 & #5: OI velocity — split 25h window into two halves
+          const mid      = vals[Math.floor(vals.length / 2)];
+          const olderRef = vals[0];
+          const olderDelta = olderRef > 0 ? ((mid - olderRef) / olderRef) * 100 : null;
+          const newerDelta = mid > 0      ? ((newest - mid) / mid) * 100         : null;
+          if (olderDelta !== null && newerDelta !== null) {
+            oiVelocity = newerDelta - olderDelta; // positive = accelerating
+          }
+        }
+      }
+    }
+  } catch(e) {}
+
+  try {
+    // Fix #1, #3, #7, #8: 1h klines — 5 candles gives us 4h + 1h changes
+    const klRes = await fetch(
+      `${BYBIT_API}/kline?category=linear&symbol=${sym}USDT&interval=60&limit=5`
+    ).catch(() => null);
+
+    if (klRes && klRes.ok) {
+      const kd   = await klRes.json();
+      const kl   = (kd.result?.list || []).reverse(); // oldest first
+      if (kl.length >= 2) {
+        // 1h change: last candle open → close
+        const last  = kl[kl.length - 1];
+        const lOpen = parseFloat(last[1]), lClose = parseFloat(last[4]);
+        if (!isNaN(lOpen) && lOpen > 0) change1h = ((lClose - lOpen) / lOpen) * 100;
+
+        // 4h change: 4 candles ago open → last close
+        const base4h = kl.length >= 5 ? kl[kl.length - 5] : kl[0];
+        const bOpen  = parseFloat(base4h[1]);
+        if (!isNaN(bOpen) && bOpen > 0) change4h = ((lClose - bOpen) / bOpen) * 100;
+      }
+    }
+  } catch(e) {}
+
+  return { oiDelta, oiVelocity, change4h, change1h };
+}
+
+// ── Cell CSS class based on signal + score ──
+function hmCellClass(signal, score, direction) {
+  if (signal === 'firing-now') return 'hm-firing-now';
+  if (signal === 'post-move')  return 'hm-post-move';
+  if (signal === 'squeeze-bull') {
+    if (score >= 70) return 'hm-squeeze-bull';
+    if (score >= 55) return 'hm-squeeze-bull-mid';
+    return 'hm-squeeze-bull-low';
+  }
+  if (signal === 'squeeze-bear') {
+    if (score >= 70) return 'hm-squeeze-bear';
+    if (score >= 55) return 'hm-squeeze-bear-mid';
+    return 'hm-squeeze-bear-low';
+  }
+  if (signal === 'oi-build' || signal === 'oi-unwind') return signal === 'oi-build' ? 'hm-oi-build' : 'hm-oi-unwind';
+  if (signal === 'watch') return 'hm-watch';
+  return 'hm-neutral';
+}
+
+const HM_SIG_SHORT = {
+  'squeeze-bull': '▲ PUMP',
+  'squeeze-bear': '▼ DUMP',
+  'oi-build':     '▲ BUILDING',
+  'oi-unwind':    '▼ UNWIND',
+  'firing-now':   '⚡ FIRING',
+  'post-move':    '✓ DONE',
+  'watch':        '◈ WATCH',
+  'neutral':      '',
+};
+
+// ── Active heatmap filter ──
+let hmActiveFilter = 'all';
+
+function setHmFilter(f) {
+  hmActiveFilter = f;
+  ['all','bull','bear','alert','done'].forEach(key => {
+    const el = document.getElementById('hmStat-' + key);
+    if (el) el.classList.toggle('hm-stat-active', key === f);
+  });
+  renderHeatmap();
+}
+
+// ── Render heatmap from hmResults ──
+function renderHeatmap() {
+  const grid = document.getElementById('hmGrid');
+  if (!grid) return;
+  if (!hmResults.length) return;
+
+  let filtered = [...hmResults];
+
+  if (hmActiveFilter === 'bull')  filtered = filtered.filter(r => r.direction === 'bull' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move');
+  if (hmActiveFilter === 'bear')  filtered = filtered.filter(r => r.direction === 'bear' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move');
+  if (hmActiveFilter === 'alert') filtered = filtered.filter(r => r.score >= 70 && r.signal !== 'firing-now' && r.signal !== 'post-move');
+  if (hmActiveFilter === 'done')  filtered = filtered.filter(r => r.signal === 'firing-now' || r.signal === 'post-move');
+  // 'all' excludes post-move/firing by default — they live in DONE tab
+  if (hmActiveFilter === 'all')   filtered = filtered.filter(r => r.signal !== 'firing-now' && r.signal !== 'post-move');
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="hm-empty">No results for this filter.</div>`;
+    return;
+  }
+
+  const coins = filtered.slice(0, 30);
+
+  grid.innerHTML = coins.map((c, i) => {
+    const cls      = hmCellClass(c.signal, c.score, c.direction);
+    const spanCls  = i < 2 ? ' span2' : '';
+    const sigShort = HM_SIG_SHORT[c.signal] || '';
+    const chgStr   = c.change !== null && !isNaN(c.change)
+      ? (c.change >= 0 ? '+' : '') + c.change.toFixed(1) + '%'
+      : '';
+    const ch4hStr  = c.change4h !== null && !isNaN(c.change4h)
+      ? ` · 4h: ${c.change4h >= 0 ? '+' : ''}${c.change4h.toFixed(1)}%`
+      : '';
+    const velStr   = c.oiVelocity !== null
+      ? ` · OI vel: ${c.oiVelocity >= 0 ? '↑' : '↓'}${Math.abs(c.oiVelocity).toFixed(1)}%`
+      : '';
+    const tooltip  = `${c.sym}/USDT · ${(c.signal||'').replace(/-/g,' ').toUpperCase()} · FR: ${c.fr !== null ? c.fr.toFixed(4)+'%' : 'n/a'} · 24h: ${chgStr}${ch4hStr}${velStr} · Score: ${c.score}`;
+    const confPct  = Math.max(5, Math.min(100, c.score));
+    return `
+      <div class="hm-cell ${cls}${spanCls}" title="${tooltip}" onclick="hmClick('${c.sym}')">
+        <div class="hm-sym">${c.sym}</div>
+        ${sigShort ? `<div class="hm-sig">${sigShort}</div>` : ''}
+        <div class="hm-score-badge">${c.score}</div>
+        <div class="hm-conf-bar" style="width:${confPct}%"></div>
+      </div>`;
+  }).join('');
+}
+
+// ── Click cell → fill search + fetch ──
+function hmClick(sym) {
+  const input = document.getElementById('tickerInput');
+  input.value = sym;
+  input.style.color = 'var(--green)';
+  setTimeout(() => { input.style.color = ''; }, 500);
+  fetchData();
+  setTimeout(() => {
+    const rs = document.getElementById('resultSection');
+    if (rs && rs.style.display !== 'none') {
+      rs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 3500);
+}
+
+// ── Main scan — v8 with all fixes ──
+async function runHeatmapScan() {
+  // Fix #22: Rescan cooldown — prevent API hammering
+  const btn     = document.getElementById('hmScanBtn');
+  const btnText = document.getElementById('hmScanBtnText');
+  if (btn.disabled) return;
+
+  const progWrap = document.getElementById('hmProgressWrap');
+  const progBar  = document.getElementById('hmProgBar');
+  const progText = document.getElementById('hmProgText');
+  const grid     = document.getElementById('hmGrid');
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="hm-spin"></span> SCANNING...';
+  progWrap.style.display = 'block';
+  hmResults = [];
+
+  function setHmProgress(pct, msg) {
+    progBar.style.width = pct + '%';
+    progText.textContent = msg;
+  }
+
+  grid.innerHTML = `<div class="hm-empty"><span id="hmScanMsg">Fetching all pairs...</span></div>`;
+
+  try {
+    // Step 1 — fetch all tickers from Binance + Bybit simultaneously
+    setHmProgress(5, 'Fetching Binance + Bybit tickers...');
+    const [binTickRes, binFrRes, bybitTickRes] = await Promise.all([
+      fetch(`${BINANCE_FAPI}/ticker/24hr`).catch(() => null),
+      fetch(`${BINANCE_FAPI}/premiumIndex`).catch(() => null),
+      fetch(`${BYBIT_API}/tickers?category=linear`).catch(() => null),
+    ]);
+
+    // Build Binance funding map
+    const binFrMap = {};
+    if (binFrRes && binFrRes.ok) {
+      const list = await binFrRes.json();
+      if (Array.isArray(list)) list.forEach(f => {
+        binFrMap[f.symbol.replace('USDT', '')] = parseFloat(f.lastFundingRate) * 100;
+      });
+    }
+
+    // Build Bybit map
+    const bybitMap = {};
+    if (bybitTickRes && bybitTickRes.ok) {
+      const d    = await bybitTickRes.json();
+      const list = d.result?.list || [];
+      list.filter(t => t.symbol.endsWith('USDT')).forEach(t => {
+        const base  = t.symbol.replace('USDT', '');
+        const price = parseFloat(t.lastPrice);
+        bybitMap[base] = {
+          price,
+          fr:     isNaN(parseFloat(t.fundingRate)) ? null : parseFloat(t.fundingRate) * 100,
+          volume: parseFloat(t.volume24h) * price,
+          change: parseFloat(t.price24hPcnt) * 100,
+          exch:   'bybit',
+        };
+      });
+    }
+
+    // Build Binance coin list
+    const binCoins = [];
+    if (binTickRes && binTickRes.ok) {
+      const list = await binTickRes.json();
+      if (Array.isArray(list)) {
+        list.filter(t => t.symbol.endsWith('USDT')).forEach(t => {
+          const base = t.symbol.replace('USDT', '');
+          binCoins.push({
+            sym:    base,
+            exch:   'binance',
+            price:  parseFloat(t.lastPrice),
+            fr:     binFrMap[base] ?? null,
+            volume: parseFloat(t.quoteVolume),
+            change: parseFloat(t.priceChangePercent),
+          });
+        });
+      }
+    }
+
+    // Merge — Binance priority, Bybit fills gaps
+    const seen     = new Set();
+    const allCoins = [];
+    binCoins.forEach(c => { seen.add(c.sym); allCoins.push(c); });
+    Object.entries(bybitMap).forEach(([sym, d]) => {
+      if (!seen.has(sym)) allCoins.push({ sym, ...d });
+    });
+
+    // Filter: min $3M volume
+    const viable = allCoins.filter(c => !isNaN(c.volume) && c.volume > 3e6);
+    setHmProgress(15, `Got ${viable.length} pairs — fetching OI + momentum data...`);
+
+    // Fix #20: Step 2 — OI delta/velocity + kline fetch per coin, batched 12 at a time
+    const BATCH = 12;
+    let done = 0;
+    const withData = [];
+
+    for (let i = 0; i < viable.length; i += BATCH) {
+      const batch   = viable.slice(i, i + BATCH);
+      const results = await Promise.all(batch.map(async c => {
+        const { oiDelta, oiVelocity, change4h, change1h } = await pmFetchCoinData(c.sym);
+        return { ...c, oiDelta, oiVelocity, change4h, change1h };
+      }));
+      results.forEach(r => withData.push(r));
+      done += batch.length;
+      // Fix #21: updated progress label
+      const pct = 15 + Math.round((done / viable.length) * 75);
+      setHmProgress(pct, `OI + momentum: ${done}/${viable.length} pairs...`);
+    }
+
+    setHmProgress(97, 'Scoring all pairs...');
+
+    // Step 3 — score every coin
+    hmResults = withData.map(c => {
+      const { score, direction, signal, breakdown } = pmComputeScore({
+        fr: c.fr, oiDelta: c.oiDelta, oiVelocity: c.oiVelocity,
+        change24h: c.change, change4h: c.change4h, change1h: c.change1h,
+        volume: c.volume,
+      });
+      return { ...c, score, direction, signal, breakdown };
+    }).sort((a, b) => b.score - a.score);
+
+    setHmProgress(100, `Done — ${hmResults.length} pairs scored`);
+
+    // Update stats
+    const highAlert  = hmResults.filter(r => r.score >= 70 && r.signal !== 'firing-now' && r.signal !== 'post-move').length;
+    const bullCount  = hmResults.filter(r => r.direction === 'bull' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move').length;
+    const bearCount  = hmResults.filter(r => r.direction === 'bear' && r.score >= 55 && r.signal !== 'firing-now' && r.signal !== 'post-move').length;
+    const doneCount  = hmResults.filter(r => r.signal === 'firing-now' || r.signal === 'post-move').length;
+
+    document.getElementById('hmStatPairs').textContent = hmResults.length;
+    document.getElementById('hmStatBull').textContent  = bullCount;
+    document.getElementById('hmStatBear').textContent  = bearCount;
+    document.getElementById('hmStatHigh').textContent  = highAlert;
+    document.getElementById('hmStatDone').textContent  = doneCount;
+
+    // Fix #18: Scan timestamp
+    hmLastScanTime = new Date();
+    const timeStr = hmLastScanTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const el = document.getElementById('hmScanTime');
+    if (el) el.textContent = `Last scan: ${timeStr} · ${hmResults.length} pairs scored`;
+
+    renderHeatmap();
+
+  } catch(e) {
+    grid.innerHTML = `<div class="hm-empty">Scan failed: ${e.message}</div>`;
+  }
+
+  progWrap.style.display = 'none';
+
+  // Fix #22: 90-second rescan cooldown
+  let cooldown = 90;
+  btnText.textContent = `RESCAN (${cooldown}s)`;
+  hmRescanCooldownTimer = setInterval(() => {
+    cooldown--;
+    if (cooldown <= 0) {
+      clearInterval(hmRescanCooldownTimer);
+      btn.disabled = false;
+      btnText.textContent = 'RESCAN';
+    } else {
+      btnText.textContent = `RESCAN (${cooldown}s)`;
+    }
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+(async function init() {
+  await loadAllMarketData();
+  startRefreshCycle();
+  document.getElementById('refreshText').textContent = `Refreshes in 60s`;
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+})();
+</script>
+</body>
+</html>
