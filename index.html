@@ -720,6 +720,301 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.4s ease, transform 0.4s ease; }
 .reveal.visible { opacity: 1; transform: none; }
 
+/* ── HERO 2-COL LAYOUT ── */
+.hero-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 40px;
+  align-items: start;
+}
+.hero-left { display: flex; flex-direction: column; }
+
+/* ── PRE-MOVE HEATMAP PANEL ── */
+.heatmap-panel {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg2);
+  position: sticky;
+  top: 72px;
+}
+.heatmap-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.heatmap-panel-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.heatmap-scan-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  padding: 5px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.heatmap-scan-btn:hover { opacity: 0.85; }
+.heatmap-scan-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.heatmap-scan-btn .hm-spin {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border: 1.5px solid rgba(0,0,0,0.25);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Progress bar inside panel */
+.hm-progress-wrap {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  display: none;
+}
+.hm-progress-bar-bg {
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+.hm-progress-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width 0.25s;
+}
+.hm-progress-text {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* Stats strip */
+.hm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.hm-stat {
+  background: var(--bg2);
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.hm-stat:hover { background: var(--bg3); }
+.hm-stat-active { background: var(--bg3) !important; box-shadow: inset 0 -2px 0 var(--green); }
+.hm-stat-label {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.hm-stat-val {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+.hm-stat-val.green { color: var(--green); }
+.hm-stat-val.red   { color: var(--red); }
+.hm-stat-val.gold  { color: var(--gold); }
+
+/* Grid area */
+.heatmap-grid-wrap { padding: 10px; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+}
+
+/* Cells */
+.hm-cell {
+  aspect-ratio: 1.35 / 1;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  position: relative;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+.hm-cell:hover { filter: brightness(1.3); transform: scale(1.05); z-index: 2; border-color: rgba(255,255,255,0.25); }
+.hm-cell:active { transform: scale(0.97); }
+.hm-cell.span2 { grid-column: span 2; aspect-ratio: 2.7/1; }
+
+/* Cell content */
+.hm-sym {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  text-align: center;
+}
+.hm-sig {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  opacity: 0.9;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Signal-based cell colors */
+.hm-squeeze-bull { background: rgba(0,230,118,0.55); }
+.hm-squeeze-bull .hm-sym,
+.hm-squeeze-bull .hm-score,
+.hm-squeeze-bull .hm-sig { color: #003d1a; }
+
+.hm-squeeze-bull-mid { background: rgba(0,230,118,0.28); }
+.hm-squeeze-bull-mid .hm-sym,
+.hm-squeeze-bull-mid .hm-score,
+.hm-squeeze-bull-mid .hm-sig { color: #00e676; }
+
+.hm-squeeze-bull-low { background: rgba(0,230,118,0.12); }
+.hm-squeeze-bull-low .hm-sym,
+.hm-squeeze-bull-low .hm-score,
+.hm-squeeze-bull-low .hm-sig { color: rgba(0,230,118,0.85); }
+
+.hm-squeeze-bear { background: rgba(255,68,68,0.55); }
+.hm-squeeze-bear .hm-sym,
+.hm-squeeze-bear .hm-score,
+.hm-squeeze-bear .hm-sig { color: #ffe0e0; }
+
+.hm-squeeze-bear-mid { background: rgba(255,68,68,0.28); }
+.hm-squeeze-bear-mid .hm-sym,
+.hm-squeeze-bear-mid .hm-score,
+.hm-squeeze-bear-mid .hm-sig { color: #ff8080; }
+
+.hm-squeeze-bear-low { background: rgba(255,68,68,0.12); }
+.hm-squeeze-bear-low .hm-sym,
+.hm-squeeze-bear-low .hm-score,
+.hm-squeeze-bear-low .hm-sig { color: rgba(255,100,100,0.85); }
+
+.hm-oi-build { background: rgba(64,196,255,0.28); }
+.hm-oi-build .hm-sym,
+.hm-oi-build .hm-score,
+.hm-oi-build .hm-sig { color: #40c4ff; }
+
+.hm-oi-unwind { background: rgba(206,147,216,0.22); }
+.hm-oi-unwind .hm-sym,
+.hm-oi-unwind .hm-score,
+.hm-oi-unwind .hm-sig { color: #ce93d8; }
+
+.hm-watch { background: rgba(255,213,79,0.18); }
+.hm-watch .hm-sym,
+.hm-watch .hm-score,
+.hm-watch .hm-sig { color: #ffd54f; }
+
+.hm-neutral { background: rgba(255,255,255,0.04); }
+.hm-neutral .hm-sym  { color: var(--sub); }
+.hm-neutral .hm-score,
+.hm-neutral .hm-sig  { color: var(--muted); }
+
+/* Empty / pre-scan state */
+.hm-empty {
+  grid-column: span 5;
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.9;
+}
+.hm-empty strong { color: var(--sub); font-weight: 500; }
+
+/* Legend */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+  flex-wrap: wrap;
+}
+.hm-legend-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.hm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.hm-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.hm-click-hint {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 300;
+  padding: 4px 12px 7px;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 980px) {
+  .hero-layout { grid-template-columns: 1fr; }
+  .heatmap-panel { position: static; }
+  .heatmap-grid { grid-template-columns: repeat(7, 1fr); }
+  .hm-cell.span2 { grid-column: span 2; }
+}
+@media (max-width: 640px) {
+  main { padding: 90px 20px 60px; }
+  nav { padding: 0 20px; }
+  .search-wrap { flex-direction: column; border-radius: 4px; }
+  .btn-fetch { padding: 14px; text-align: center; }
+  .dash-header, .dash-row { font-size: 10px; }
+  .footer-disc { text-align: left; }
+  .market-overview { grid-template-columns: 1fr; }
+  .tvol-col-heads, .tvol-row { grid-template-columns: 28px 1fr 90px 70px; }
+  .tvol-col-heads .tvol-price-col,
+  .tvol-row .tvol-price { display: none; }
+  .heatmap-grid { grid-template-columns: repeat(5, 1fr); }
+  .hm-cell.span2 { grid-column: span 2; }
+}
+
 /* FOOTER */
 footer {
   position: relative;
@@ -748,18 +1043,6 @@ footer {
   .tvol-col-heads, .tvol-row { grid-template-columns: 28px 1fr 90px 90px 70px; }
   .tvol-col-heads .tvol-oi-col, .tvol-row .tvol-oi { display: none; }
 }
-@media (max-width: 640px) {
-  main { padding: 90px 20px 60px; }
-  nav { padding: 0 20px; }
-  .search-wrap { flex-direction: column; border-radius: 4px; }
-  .btn-fetch { padding: 14px; text-align: center; }
-  .dash-header, .dash-row { font-size: 10px; }
-  .footer-disc { text-align: left; }
-  .market-overview { grid-template-columns: 1fr; }
-  .tvol-col-heads, .tvol-row { grid-template-columns: 28px 1fr 90px 70px; }
-  .tvol-col-heads .tvol-price-col,
-  .tvol-row .tvol-price { display: none; }
-}
 </style>
 </head>
 <body>
@@ -776,30 +1059,98 @@ footer {
 </nav>
 
 <main>
-  <div class="hero-tag">Market Intelligence Tool</div>
-  <h1 class="hero-title">
-    <span class="accent">Derivatives</span><br>
-    <span class="dim">Intel</span> Engine
-  </h1>
-  <p class="hero-sub">Enter any ticker to fetch live Open Interest, Funding Rate, Volume, FDV and more — then get an automated market bias based on institutional derivatives logic.</p>
 
-  <!-- ── TICKER SEARCH (hero position) ── -->
-  <div class="search-wrap" style="margin-bottom:12px;">
-    <div class="ticker-prefix">Ticker</div>
-    <input type="text" id="tickerInput" placeholder="BTC, ETH, SOL..." maxlength="20" autocomplete="off" spellcheck="false">
-    <button class="btn-fetch" id="fetchBtn" onclick="fetchData()">Fetch →</button>
-  </div>
+  <!-- ── HERO: 2-col ── -->
+  <div class="hero-layout" style="margin-bottom:0;">
 
-  <div class="source-row" style="margin-bottom:0;">
-    <div class="source-dot" id="sourceDot"></div>
-    <span id="sourceText">Binance Futures → Bybit → CoinGecko fallback chain</span>
-  </div>
+    <!-- LEFT: existing title + search -->
+    <div class="hero-left">
+      <div class="hero-tag">Market Intelligence Tool</div>
+      <h1 class="hero-title">
+        <span class="accent">Derivatives</span><br>
+        <span class="dim">Intel</span> Engine
+      </h1>
+      <p class="hero-sub">Enter any ticker to fetch live Open Interest, Funding Rate, Volume, FDV and more — then get an automated market bias based on institutional derivatives logic.</p>
 
-  <div class="status-msg" id="statusMsg"></div>
-  <div class="spinner-wrap" id="spinner">
-    <div class="spinner"></div>
-    <span id="spinnerText">Querying Binance Futures...</span>
-  </div>
+      <div class="search-wrap" style="margin-bottom:12px;">
+        <div class="ticker-prefix">Ticker</div>
+        <input type="text" id="tickerInput" placeholder="BTC, ETH, SOL..." maxlength="20" autocomplete="off" spellcheck="false">
+        <button class="btn-fetch" id="fetchBtn" onclick="fetchData()">Fetch →</button>
+      </div>
+
+      <div class="source-row" style="margin-bottom:0;">
+        <div class="source-dot" id="sourceDot"></div>
+        <span id="sourceText">Binance Futures → Bybit → CoinGecko fallback chain</span>
+      </div>
+
+      <div class="status-msg" id="statusMsg"></div>
+      <div class="spinner-wrap" id="spinner">
+        <div class="spinner"></div>
+        <span id="spinnerText">Querying Binance Futures...</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Pre-Move Heatmap (full scanner engine) -->
+    <div class="heatmap-panel">
+
+      <div class="heatmap-panel-header">
+        <span class="heatmap-panel-title">Potential Movers</span>
+        <button class="heatmap-scan-btn" id="hmScanBtn" onclick="runHeatmapScan()">
+          <span id="hmScanBtnText">SCAN ALL PAIRS</span>
+        </button>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="hm-progress-wrap" id="hmProgressWrap">
+        <div class="hm-progress-bar-bg">
+          <div class="hm-progress-bar-fill" id="hmProgBar" style="width:0%"></div>
+        </div>
+        <div class="hm-progress-text" id="hmProgText">Starting scan...</div>
+      </div>
+
+      <!-- Stats strip — clickable filters -->
+      <div class="hm-stats">
+        <div class="hm-stat hm-stat-active" id="hmStat-all" onclick="setHmFilter('all')" title="Show all pairs">
+          <div class="hm-stat-label">Scanned</div>
+          <div class="hm-stat-val" id="hmStatPairs">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-bull" onclick="setHmFilter('bull')" title="Bull setups only (score 55+)">
+          <div class="hm-stat-label">Bull</div>
+          <div class="hm-stat-val green" id="hmStatBull">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-bear" onclick="setHmFilter('bear')" title="Bear setups only (score 55+)">
+          <div class="hm-stat-label">Bear</div>
+          <div class="hm-stat-val red" id="hmStatBear">—</div>
+        </div>
+        <div class="hm-stat" id="hmStat-alert" onclick="setHmFilter('alert')" title="High alert — score 70+">
+          <div class="hm-stat-label">Alert 70+</div>
+          <div class="hm-stat-val gold" id="hmStatHigh">—</div>
+        </div>
+      </div>
+
+      <!-- Heatmap grid -->
+      <div class="heatmap-grid-wrap">
+        <div class="heatmap-grid" id="hmGrid">
+          <div class="hm-empty">
+            Hit <strong>SCAN ALL PAIRS</strong> to detect setups.<br>
+            Scores ~500 futures pairs by Funding Rate,<br>OI Delta, Price & Volume signals.
+          </div>
+        </div>
+      </div>
+
+      <div class="hm-click-hint">↑ Click any coin to fetch its full derivatives analysis</div>
+
+      <div class="heatmap-legend">
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(0,230,118,0.55)"></div>▲ PUMP — shorts overcrowded, spike likely</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,68,68,0.55)"></div>▼ DUMP — longs overcrowded, flush risk</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(64,196,255,0.28)"></div>▲ BUILDING — OI accumulating, bullish</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(206,147,216,0.22)"></div>▼ UNWIND — positions closing, bearish</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:rgba(255,213,79,0.18)"></div>◈ WATCH — conditions forming</div>
+      </div>
+
+    </div><!-- end heatmap-panel -->
+
+  </div><!-- end hero-layout -->
 
   <!-- ── RESULT SECTION (inline, pushes content down) ── -->
   <div id="resultSection">
@@ -1969,6 +2320,314 @@ async function fetchData() {
 document.getElementById('tickerInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchData();
 });
+
+// ═════════════════════════════════════════════
+// PRE-MOVE SCANNER ENGINE (heatmap panel)
+// ═════════════════════════════════════════════
+let hmResults = [];
+
+// ── Score engine (identical to standalone scanner) ──
+function pmComputeScore(coin) {
+  const { fr, oiDelta, change24h, volume } = coin;
+  let bullScore = 0, bearScore = 0;
+  const breakdown = { bull: {}, bear: {} };
+
+  if (fr !== null) {
+    if      (fr <= -0.05) { bullScore += 35; breakdown.bull.funding = 35; }
+    else if (fr <= -0.02) { bullScore += 22; breakdown.bull.funding = 22; }
+    else if (fr <= -0.01) { bullScore += 12; breakdown.bull.funding = 12; }
+    else                  { breakdown.bull.funding = 0; }
+    if      (fr >= 0.05)  { bearScore += 35; breakdown.bear.funding = 35; }
+    else if (fr >= 0.02)  { bearScore += 22; breakdown.bear.funding = 22; }
+    else if (fr >= 0.01)  { bearScore += 12; breakdown.bear.funding = 12; }
+    else                  { breakdown.bear.funding = 0; }
+  }
+
+  if (oiDelta !== null) {
+    if      (oiDelta > 15)  { bullScore += 30; bearScore += 20; breakdown.bull.oi = 30; breakdown.bear.oi = 20; }
+    else if (oiDelta > 8)   { bullScore += 22; bearScore += 16; breakdown.bull.oi = 22; breakdown.bear.oi = 16; }
+    else if (oiDelta > 3)   { bullScore += 14; bearScore += 10; breakdown.bull.oi = 14; breakdown.bear.oi = 10; }
+    else if (oiDelta > 1)   { bullScore +=  8; bearScore +=  6; breakdown.bull.oi = 8;  breakdown.bear.oi = 6; }
+    else if (oiDelta < -10) { bearScore += 18; breakdown.bear.oi = 18; breakdown.bull.oi = 0; }
+    else                    { breakdown.bull.oi = 0; breakdown.bear.oi = 0; }
+  }
+
+  if (change24h !== null) {
+    if      (change24h >= -3  && change24h <= 5)  { bullScore += 20; breakdown.bull.price = 20; }
+    else if (change24h >= -8  && change24h <= 12) { bullScore += 10; breakdown.bull.price = 10; }
+    else                                           { breakdown.bull.price = 0; }
+    if      (change24h >= -5  && change24h <= 3)  { bearScore += 20; breakdown.bear.price = 20; }
+    else if (change24h >= -12 && change24h <= 8)  { bearScore += 10; breakdown.bear.price = 10; }
+    else                                           { breakdown.bear.price = 0; }
+  }
+
+  if (volume !== null) {
+    if      (volume > 100e6) { bullScore += 15; bearScore += 15; breakdown.bull.vol = 15; breakdown.bear.vol = 15; }
+    else if (volume > 30e6)  { bullScore += 10; bearScore += 10; breakdown.bull.vol = 10; breakdown.bear.vol = 10; }
+    else if (volume > 8e6)   { bullScore +=  5; bearScore +=  5; breakdown.bull.vol = 5;  breakdown.bear.vol = 5; }
+    else                     { breakdown.bull.vol = 0; breakdown.bear.vol = 0; }
+  }
+
+  const direction = bullScore >= bearScore ? 'bull' : 'bear';
+  const score     = Math.min(100, direction === 'bull' ? bullScore : bearScore);
+
+  let signal = 'neutral';
+  if (direction === 'bull') {
+    if      (fr !== null && fr <= -0.05 && oiDelta !== null && oiDelta > 3) signal = 'squeeze-bull';
+    else if (oiDelta !== null && oiDelta > 8)                                signal = 'oi-build';
+    else if (score >= 45)                                                    signal = 'watch';
+  } else {
+    if      (fr !== null && fr >= 0.05 && oiDelta !== null && oiDelta > 3)  signal = 'squeeze-bear';
+    else if (oiDelta !== null && oiDelta < -10)                              signal = 'oi-unwind';
+    else if (score >= 45)                                                    signal = 'watch';
+  }
+
+  return { score, direction, signal, breakdown: breakdown[direction] };
+}
+
+// ── OI delta fetch — Bybit historical (25h) ──
+async function pmFetchOIDelta(sym) {
+  try {
+    const r = await fetch(`${BYBIT_API}/open-interest?category=linear&symbol=${sym}USDT&intervalTime=1h&limit=25`).catch(() => null);
+    if (!r || !r.ok) return null;
+    const d = await r.json();
+    if (d.retCode !== 0) return null;
+    const list = d.result?.list || [];
+    if (list.length < 2) return null;
+    const newer = parseFloat(list[0].openInterest);
+    const older = parseFloat(list[list.length - 1].openInterest);
+    if (!isNaN(newer) && !isNaN(older) && older > 0) return ((newer - older) / older) * 100;
+  } catch(e) {}
+  return null;
+}
+
+// ── Cell class based on signal + score ──
+function hmCellClass(signal, score, direction) {
+  if (signal === 'squeeze-bull') {
+    if (score >= 70) return 'hm-squeeze-bull';
+    if (score >= 55) return 'hm-squeeze-bull-mid';
+    return 'hm-squeeze-bull-low';
+  }
+  if (signal === 'squeeze-bear') {
+    if (score >= 70) return 'hm-squeeze-bear';
+    if (score >= 55) return 'hm-squeeze-bear-mid';
+    return 'hm-squeeze-bear-low';
+  }
+  if (signal === 'oi-build' || signal === 'oi-unwind') return signal === 'oi-build' ? 'hm-oi-build' : 'hm-oi-unwind';
+  if (signal === 'watch') return 'hm-watch';
+  return 'hm-neutral';
+}
+
+const HM_SIG_SHORT = {
+  'squeeze-bull': '▲ PUMP',
+  'squeeze-bear': '▼ DUMP',
+  'oi-build':     '▲ BUILDING',
+  'oi-unwind':    '▼ UNWIND',
+  'watch':        '◈ WATCH',
+  'neutral':      '',
+};
+
+// ── Active heatmap filter ──
+let hmActiveFilter = 'all'; // 'all' | 'bull' | 'bear' | 'alert'
+
+function setHmFilter(f) {
+  hmActiveFilter = f;
+  // Update stat cell active states
+  ['all','bull','bear','alert'].forEach(key => {
+    const el = document.getElementById('hmStat-' + key);
+    if (el) el.classList.toggle('hm-stat-active', key === f);
+  });
+  renderHeatmap();
+}
+
+// ── Render heatmap from hmResults ──
+function renderHeatmap() {
+  const grid = document.getElementById('hmGrid');
+  if (!grid) return;
+  if (!hmResults.length) return;
+
+  // Apply filter
+  let filtered = [...hmResults];
+  if (hmActiveFilter === 'bull')  filtered = filtered.filter(r => r.direction === 'bull' && r.score >= 55);
+  if (hmActiveFilter === 'bear')  filtered = filtered.filter(r => r.direction === 'bear' && r.score >= 55);
+  if (hmActiveFilter === 'alert') filtered = filtered.filter(r => r.score >= 70);
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="hm-empty">No results for this filter.</div>`;
+    return;
+  }
+
+  // Top 30 by score; top 2 get span2
+  const coins = filtered.slice(0, 30);
+
+  grid.innerHTML = coins.map((c, i) => {
+    const cls      = hmCellClass(c.signal, c.score, c.direction);
+    const spanCls  = i < 2 ? ' span2' : '';
+    const sigShort = HM_SIG_SHORT[c.signal] || '';
+    const chgStr   = c.change !== null && !isNaN(c.change)
+      ? (c.change >= 0 ? '+' : '') + c.change.toFixed(1) + '%'
+      : '';
+    const tooltip  = `${c.sym}/USDT · ${c.signal.replace(/-/g,' ').toUpperCase()} · FR: ${c.fr !== null ? c.fr.toFixed(4)+'%' : 'n/a'} · 24h: ${chgStr}`;
+    return `
+      <div class="hm-cell ${cls}${spanCls}" title="${tooltip}" onclick="hmClick('${c.sym}')">
+        <div class="hm-sym">${c.sym}</div>
+        ${sigShort ? `<div class="hm-sig">${sigShort}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ── Click cell → fill search + fetch ──
+function hmClick(sym) {
+  const input = document.getElementById('tickerInput');
+  input.value = sym;
+  input.style.color = 'var(--green)';
+  setTimeout(() => { input.style.color = ''; }, 500);
+  fetchData();
+  // Scroll to result after data renders — delay accounts for async fetch
+  setTimeout(() => {
+    const rs = document.getElementById('resultSection');
+    if (rs && rs.style.display !== 'none') {
+      rs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 3500);
+}
+
+// ── Main scan — runs full Pre-Move Scanner engine ──
+async function runHeatmapScan() {
+  const btn     = document.getElementById('hmScanBtn');
+  const btnText = document.getElementById('hmScanBtnText');
+  const progWrap = document.getElementById('hmProgressWrap');
+  const progBar  = document.getElementById('hmProgBar');
+  const progText = document.getElementById('hmProgText');
+  const grid     = document.getElementById('hmGrid');
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="hm-spin"></span> SCANNING...';
+  progWrap.style.display = 'block';
+  hmResults = [];
+
+  function setHmProgress(pct, msg) {
+    progBar.style.width = pct + '%';
+    progText.textContent = msg;
+  }
+
+  grid.innerHTML = `<div class="hm-empty"><span id="hmScanMsg">Fetching all pairs...</span></div>`;
+
+  try {
+    // Step 1 — fetch all tickers from Binance + Bybit simultaneously
+    setHmProgress(5, 'Fetching Binance + Bybit tickers...');
+    const [binTickRes, binFrRes, bybitTickRes] = await Promise.all([
+      fetch(`${BINANCE_FAPI}/ticker/24hr`).catch(() => null),
+      fetch(`${BINANCE_FAPI}/premiumIndex`).catch(() => null),
+      fetch(`${BYBIT_API}/tickers?category=linear`).catch(() => null),
+    ]);
+
+    // Build Binance funding map
+    const binFrMap = {};
+    if (binFrRes && binFrRes.ok) {
+      const list = await binFrRes.json();
+      if (Array.isArray(list)) list.forEach(f => {
+        binFrMap[f.symbol.replace('USDT', '')] = parseFloat(f.lastFundingRate) * 100;
+      });
+    }
+
+    // Build Bybit map
+    const bybitMap = {};
+    if (bybitTickRes && bybitTickRes.ok) {
+      const d    = await bybitTickRes.json();
+      const list = d.result?.list || [];
+      list.filter(t => t.symbol.endsWith('USDT')).forEach(t => {
+        const base  = t.symbol.replace('USDT', '');
+        const price = parseFloat(t.lastPrice);
+        bybitMap[base] = {
+          price,
+          fr:     isNaN(parseFloat(t.fundingRate)) ? null : parseFloat(t.fundingRate) * 100,
+          volume: parseFloat(t.volume24h) * price,
+          change: parseFloat(t.price24hPcnt) * 100,
+          exch:   'bybit',
+        };
+      });
+    }
+
+    // Build Binance coin list
+    const binCoins = [];
+    if (binTickRes && binTickRes.ok) {
+      const list = await binTickRes.json();
+      if (Array.isArray(list)) {
+        list.filter(t => t.symbol.endsWith('USDT')).forEach(t => {
+          const base = t.symbol.replace('USDT', '');
+          binCoins.push({
+            sym:    base,
+            exch:   'binance',
+            price:  parseFloat(t.lastPrice),
+            fr:     binFrMap[base] ?? null,
+            volume: parseFloat(t.quoteVolume),
+            change: parseFloat(t.priceChangePercent),
+          });
+        });
+      }
+    }
+
+    // Merge — Binance priority, Bybit fills gaps
+    const seen     = new Set();
+    const allCoins = [];
+    binCoins.forEach(c => { seen.add(c.sym); allCoins.push(c); });
+    Object.entries(bybitMap).forEach(([sym, d]) => {
+      if (!seen.has(sym)) allCoins.push({ sym, ...d });
+    });
+
+    // Filter: min $3M volume
+    const viable = allCoins.filter(c => !isNaN(c.volume) && c.volume > 3e6);
+    setHmProgress(15, `Got ${viable.length} pairs — fetching OI history...`);
+
+    // Step 2 — OI delta per coin, batched 12 at a time
+    const BATCH = 12;
+    let done = 0;
+    const withOI = [];
+
+    for (let i = 0; i < viable.length; i += BATCH) {
+      const batch   = viable.slice(i, i + BATCH);
+      const results = await Promise.all(batch.map(async c => {
+        const oiDelta = await pmFetchOIDelta(c.sym);
+        return { ...c, oiDelta };
+      }));
+      results.forEach(r => withOI.push(r));
+      done += batch.length;
+      const pct = 15 + Math.round((done / viable.length) * 75);
+      setHmProgress(pct, `OI history: ${done}/${viable.length} pairs...`);
+    }
+
+    setHmProgress(97, 'Scoring all pairs...');
+
+    // Step 3 — score every coin
+    hmResults = withOI.map(c => {
+      const { score, direction, signal, breakdown } = pmComputeScore({
+        fr: c.fr, oiDelta: c.oiDelta, change24h: c.change, volume: c.volume,
+      });
+      return { ...c, score, direction, signal, breakdown };
+    }).sort((a, b) => b.score - a.score);
+
+    setHmProgress(100, `Done — ${hmResults.length} pairs scored`);
+
+    // Update stats
+    const highAlert = hmResults.filter(r => r.score >= 70).length;
+    const bullCount = hmResults.filter(r => r.direction === 'bull' && r.score >= 55).length;
+    const bearCount = hmResults.filter(r => r.direction === 'bear' && r.score >= 55).length;
+    document.getElementById('hmStatPairs').textContent = hmResults.length;
+    document.getElementById('hmStatBull').textContent  = bullCount;
+    document.getElementById('hmStatBear').textContent  = bearCount;
+    document.getElementById('hmStatHigh').textContent  = highAlert;
+
+    renderHeatmap();
+
+  } catch(e) {
+    grid.innerHTML = `<div class="hm-empty">Scan failed: ${e.message}</div>`;
+  }
+
+  progWrap.style.display = 'none';
+  btn.disabled = false;
+  btnText.textContent = 'RESCAN';
+}
 
 // ─────────────────────────────────────────────
 // INIT
