@@ -252,19 +252,6 @@ main {
   margin-bottom: 32px;
   max-width: 100%;
 }
-@media (max-width: 640px) {
-  .tvol-list-body,
-  #nfrList {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .tvol-col-heads,
-  .tvol-row,
-  .nfr-col-heads,
-  .nfr-row {
-    min-width: 560px;
-  }
-}
 .tvol-header {
   display: flex;
   align-items: center;
@@ -369,18 +356,6 @@ main {
 }
 .tvol-change.up   { color: var(--green); }
 .tvol-change.down { color: var(--red); }
-/* ── TABLE HORIZONTAL SCROLL WRAPPER (mobile) ── */
-.table-scroll-wrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-/* Keep original column widths intact — scroll kicks in when needed */
-@media (max-width: 640px) {
-  .tvol-col-heads, .tvol-row { min-width: 560px; }
-  .nfr-col-heads, .nfr-row   { min-width: 600px; }
-}
-
 .tvol-list-body { min-height: 120px; }
 
 /* ── TABS ── */
@@ -1738,50 +1713,46 @@ main {
 
     <!-- Top Volume panel -->
     <div id="panelVolume">
-      <div class="table-scroll-wrap">
-        <div class="tvol-col-heads">
-          <span>#</span>
-          <span>Pair</span>
-          <span class="tvol-price-col" style="text-align:right;">Price</span>
-          <span style="text-align:right;">24h Volume</span>
-          <span class="tvol-oi-col" style="text-align:right;">Open Interest</span>
-          <span style="text-align:right;">24h Chg</span>
-        </div>
-        <div class="tvol-list-body" id="tvolList">
-          <div class="tvol-row" style="opacity:0.35;">
-            <div class="skeleton" style="width:16px;height:10px;"></div>
-            <div class="skeleton" style="width:80px;height:10px;"></div>
-            <div class="skeleton" style="width:60px;height:10px;"></div>
-            <div class="skeleton" style="width:70px;height:10px;"></div>
-            <div class="skeleton" style="width:60px;height:10px;"></div>
-            <div class="skeleton" style="width:44px;height:10px;"></div>
-          </div>
+      <div class="tvol-col-heads">
+        <span>#</span>
+        <span>Pair</span>
+        <span class="tvol-price-col" style="text-align:right;">Price</span>
+        <span style="text-align:right;">24h Volume</span>
+        <span class="tvol-oi-col" style="text-align:right;">Open Interest</span>
+        <span style="text-align:right;">24h Chg</span>
+      </div>
+      <div class="tvol-list-body" id="tvolList">
+        <div class="tvol-row" style="opacity:0.35;">
+          <div class="skeleton" style="width:16px;height:10px;"></div>
+          <div class="skeleton" style="width:80px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:70px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:44px;height:10px;"></div>
         </div>
       </div>
     </div>
 
     <!-- Negative Funding Rate panel -->
     <div id="panelNfr" style="display:none;">
-      <div class="table-scroll-wrap">
-        <div class="nfr-col-heads">
-          <span>#</span>
-          <span>Pair</span>
-          <span class="nfr-price-col" style="text-align:right;">Price</span>
-          <span style="text-align:right;">Funding Rate</span>
-          <span class="nfr-vol-col" style="text-align:right;">24h Volume</span>
-          <span class="nfr-oi-col" style="text-align:right;">Open Interest</span>
-          <span style="text-align:right;">24h Chg</span>
-        </div>
-        <div class="tvol-list-body" id="nfrList">
-          <div class="tvol-row" style="opacity:0.35;">
-            <div class="skeleton" style="width:16px;height:10px;"></div>
-            <div class="skeleton" style="width:80px;height:10px;"></div>
-            <div class="skeleton" style="width:60px;height:10px;"></div>
-            <div class="skeleton" style="width:70px;height:10px;"></div>
-            <div class="skeleton" style="width:60px;height:10px;"></div>
-            <div class="skeleton" style="width:44px;height:10px;"></div>
-            <div class="skeleton" style="width:44px;height:10px;"></div>
-          </div>
+      <div class="nfr-col-heads">
+        <span>#</span>
+        <span>Pair</span>
+        <span class="nfr-price-col" style="text-align:right;">Price</span>
+        <span style="text-align:right;">Funding Rate</span>
+        <span class="nfr-vol-col" style="text-align:right;">24h Volume</span>
+        <span class="nfr-oi-col" style="text-align:right;">Open Interest</span>
+        <span style="text-align:right;">24h Chg</span>
+      </div>
+      <div class="tvol-list-body" id="nfrList">
+        <div class="tvol-row" style="opacity:0.35;">
+          <div class="skeleton" style="width:16px;height:10px;"></div>
+          <div class="skeleton" style="width:80px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:70px;height:10px;"></div>
+          <div class="skeleton" style="width:60px;height:10px;"></div>
+          <div class="skeleton" style="width:44px;height:10px;"></div>
+          <div class="skeleton" style="width:44px;height:10px;"></div>
         </div>
       </div>
     </div>
