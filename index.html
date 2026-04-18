@@ -1093,7 +1093,8 @@ footer {
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  overflow: hidden;
+  justify-content: center;
+  overflow: visible;
   backdrop-filter: blur(12px);
 }
 .ticker-bar-left {
@@ -1102,58 +1103,59 @@ footer {
   gap: 0;
   flex-shrink: 0;
   height: 100%;
+  padding-right: 8px;
 }
 .ticker-nav-btn {
-  height: 100%;
-  padding: 0 14px;
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--border);
+  height: calc(100% - 8px);
+  margin: 4px 6px;
+  padding: 0 12px;
+  background: rgba(0,230,118,0.08);
+  border: 1px solid rgba(0,230,118,0.28);
+  border-radius: 3px;
   font-family: 'Syne', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: var(--muted);
+  color: var(--green);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  position: relative;
 }
 .ticker-nav-btn:hover {
-  color: var(--green);
-  background: var(--green-dim);
+  color: #000;
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(0,230,118,0.3);
 }
-.ticker-bar-sep {
-  width: 1px;
-  height: 100%;
-  background: var(--border);
+.ticker-nav-btn:active {
+  transform: scale(0.97);
 }
+.ticker-bar-sep { display: none; }
 .ticker-track-wrap {
-  flex: 1;
-  overflow: hidden;
   height: 100%;
   position: relative;
-  /* Fade edges */
-  mask-image: linear-gradient(to right, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.ticker-track-wrap::-webkit-scrollbar { display: none; }
 .ticker-track {
   display: flex;
   align-items: center;
   height: 100%;
   white-space: nowrap;
+  min-width: max-content;
 }
 .ticker-inner {
   display: inline-flex;
   align-items: center;
   gap: 0;
-  animation: tickerScroll 60s linear infinite;
-  will-change: transform;
+  /* NO animation — static display */
 }
-.ticker-inner:hover { animation-play-state: paused; }
-@keyframes tickerScroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
+.ticker-inner:hover { /* no pause needed */ }
 .ticker-loading {
   font-size: 10px;
   color: var(--muted);
@@ -1961,15 +1963,8 @@ function buildTickerBar(mcap, mcapPct, vol24h, markets, oi) {
       </div>`;
   });
 
-  // Duplicate for seamless loop
-  inner.innerHTML = html + html;
-
-  requestAnimationFrame(() => {
-    const totalW = inner.scrollWidth / 2;
-    const speed  = 60; // px per second — slower since fewer items
-    const dur    = Math.max(20, totalW / speed);
-    inner.style.animationDuration = dur + 's';
-  });
+  // Single render — no duplication, no animation
+  inner.innerHTML = html;
 }
 
 // ─────────────────────────────────────────────
